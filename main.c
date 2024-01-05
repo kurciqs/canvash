@@ -26,9 +26,10 @@ int main() {
         canvash_clear_screen((vec3){0.2f, 0.3f, 0.3f});
 
         canvash_rotate_2D(glm_rad(45));
-        canvash_rectangle_2D((vec2){0.0f, 0.0f}, (vec2){1.0f, 1.0f}, (vec4){1.0f, 1.0f, 1.0f, 1.0f});
-        canvash_rectangle_2D((vec2){0.0f, 0.0f}, (vec2){1.0f, 1.0f}, (vec4){1.0f, 1.0f, 1.0f, 1.0f});
-        canvash_rectangle_2D((vec2){0.0f, 0.0f}, (vec2){1.0f, 1.0f}, (vec4){1.0f, 1.0f, 1.0f, 1.0f});
+        // TODO canvash_color(...)
+        canvash_rectangle_2D((vec2){0.0f, 0.0f}, (vec2){1.0f, 1.0f});
+        canvash_rectangle_2D((vec2){0.0f, 0.0f}, (vec2){1.0f, 1.0f});
+        canvash_rectangle_2D((vec2){0.0f, 0.0f}, (vec2){1.0f, 1.0f});
 
         canvash_render();
     }

@@ -52,7 +52,7 @@ void canvash_set_key_callback(void (*key_callback)(int, int, int));
 
 void canvash_set_mouse_callback(void (*mouse_callback)(int, int, float, float));
 
-void canvash_rectangle_2D(const vec2 p1, const vec2 p2, const vec4 color);
+void canvash_rectangle_2D(const vec2 p1, const vec2 p2);
 
 void canvash_rotate_2D(float rad);
 
