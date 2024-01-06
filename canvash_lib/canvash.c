@@ -137,7 +137,6 @@ int canvash_init(const char* app_name, int app_width, int app_height, const char
 
     glViewport(0, 0, app_width, app_height);
     glfwSetFramebufferSizeCallback(s_window, glfw_framebuffer_size_callback);
-
     if (glDebugMessageCallback) {
         glEnable(GL_DEBUG_OUTPUT);
         glDebugMessageCallback(opengl_message_callback, 0);
