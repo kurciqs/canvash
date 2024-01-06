@@ -60,3 +60,13 @@ void canvash_scale_2D(float factorX, float factorY);
 
 void canvash_transform_2D(float moveX, float moveY);
 
+void canvash_fill_color(vec4 color);
+
+void canvash_outline_color(vec4 color);
+
+void canvash_no_fill();
+
+void canvash_no_outline();
+
+void canvash_outline_size(float size);
+

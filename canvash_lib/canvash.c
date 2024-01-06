@@ -10,18 +10,26 @@ static void (*s_mouse_callback)(int, int, float, float); // mouse_callback(int b
 static CanvashMode s_mode;
 // NOTE have this be defined by like a CURRENT transform variable give by the user with rotate() etc and make it revertable
 static mat4 s_current_transform;
-static vec4 s_color;
-static vec4 s_outline_color;
+static vec4 s_fill_color;
 static bool s_fill;
+// NOTE outlines are explicitly rendered with lines except in the case of ellipses
+static vec4 s_outline_color;
+static float s_outline_size;
+static bool s_outline;
+static vec3 s_background;
+// TODO MVP matrix
+static mat4 s_mvp;
 
 //--------------------------------------------------------------
 
+
+// TODO think about how i could implement it so that measurements are in pixels
 // TODO fill will not work with instance data it has to be added to the line rendering (separate)
 // TODO gonna keep the color and the outline color and filling as static variables like the transform
 // TODO fill without an outline_color is not getting drawn
 static int s_num_draw_rectangles = 0;
-static float* s_rectangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col, vec4 outline_color */
-static size_t s_rectangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float) + sizeof(float);
+static float* s_rectangle_instance_data; /* mat4x4 mvp (includes position given as argument), vec4 col (if w component is zero it is no_fill) */
+static size_t s_rectangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
 //static size_t s_rectangle_instance_data_size = 3 * sizeof(float);
 static float s_rectangle_object_data_vertices[12] = {
         -0.5f, -0.5f, CANVASH_TWODIMENSIONAL_Z_POS,
@@ -32,8 +40,9 @@ static float s_rectangle_object_data_vertices[12] = {
 static unsigned int s_rectangle_object_data_indices[6] = {0, 1, 2, 0, 2, 3};
 static Shader s_rectangle_shader;
 
+// NOTE ellipse is also a circle
 static int s_num_draw_ellipses;
-static float* s_ellipse_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col, float radius, bool fill */
+static float* s_ellipse_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col (if w component is zero it is no_fill), vec4 outline_color (if w component is zero it is no_outline), vec2 radius*/
 static float s_ellipse_object_data_vertices[12] = {
         -0.5f, -0.5f, CANVASH_TWODIMENSIONAL_Z_POS,
         0.5f, -0.5f, CANVASH_TWODIMENSIONAL_Z_POS,
@@ -43,11 +52,13 @@ static float s_ellipse_object_data_vertices[12] = {
 static int s_ellipse_object_data_indices[6] = {0, 1, 2, 0, 2, 3};
 static Shader s_ellipse_shader;
 
+// TODO change the instance data config
 static int s_num_draw_triangles;
 static float* s_triangles_object_data_vertices; /* mat4x4 transform, vec3 pos, vec4 col, bool fill */
 static Shader s_triangle_shader;
 // NOTE triangles have explicitly USER-DEFINED vertices so they are essentially batch rendered
 
+// TODO this is really important for outlines
 static int s_num_draw_lines;
 static float* s_lines_object_data_vertices; /* mat4x4 transform, vec3 pos, vec4 col */
 static Shader s_line_shader;
@@ -169,6 +180,15 @@ int canvash_init(const char* app_name, int app_width, int app_height, const char
 
     s_rectangle_shader = create_shader("res/shader/vert.glsl", "res/shader/frag.glsl");
 
+    // NOTE set all of the styling data to basic (very gray and boring)
+    glm_mat4_identity(s_current_transform);
+    glm_vec3_one(s_fill_color); // white
+    glm_vec3_zero(s_outline_color); // black
+    s_fill = true; // fill
+    s_outline_size = 0.1f; // narrow
+    s_outline = 0.1f; // narrow
+    s_background[0] = s_background[1] = s_background[2] = 0.5f; // gray
+
     return 1;
 }
 
@@ -184,7 +204,7 @@ void canvash_clear_screen(vec3 background_color) {
 void canvash_render() {
     // TODO
 
-    if (s_rectangle_instance_data) {
+    if (s_rectangle_instance_data && s_num_draw_rectangles) {
 
         for (int i = 0; i < s_num_draw_rectangles; i++) {
             printf("rectangle at %d : \n", i);
@@ -203,6 +223,9 @@ void canvash_render() {
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(s_rectangle_object_data_indices), s_rectangle_object_data_indices, GL_STATIC_DRAW);
+
+        // TODO align the vertex data also in the shader
+        // TODO projection and view matrices
 
         // Vertex attributes
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
@@ -264,40 +287,69 @@ void canvash_rectangle_2D(const vec2 p1, const vec2 p2) {
         return;
     }
 
-    // TODO if (s_fill)
-    // TODO outline
-
-    // NOTE resize the current instance data to fit with the added rectangle
-    s_num_draw_rectangles++;
-    if (!s_rectangle_instance_data && !s_num_draw_rectangles) {
-        s_rectangle_instance_data = (float *) malloc(s_rectangle_instance_data_size * s_num_draw_rectangles);
-        if (s_rectangle_instance_data == NULL) {
-            fprintf(stderr, "[ERROR] failed to allocate any rectangle instance data.\n");
-            s_num_draw_rectangles--;
-            return;
-        }
-    }
-    else {
-        float *new_rectangle_instance_data = (float *) realloc(s_rectangle_instance_data, s_rectangle_instance_data_size * s_num_draw_rectangles);
-        if (new_rectangle_instance_data == NULL) {
-            fprintf(stderr, "[ERROR] failed to reallocate new rectangle instance data.\n");
-            s_num_draw_rectangles--;
-            return;
-        } else {
-            s_rectangle_instance_data = new_rectangle_instance_data;
-        }
+    // TODO this will render the outline with the line renderer
+    if (s_outline) {
+        fprintf(stderr, "[ERROR] cannot call canvash_rectangle_2D while in outline mode.\n");
+        return;
     }
 
-    // NOTE add the instance data
-    // NOTE 16 floats for transformation matrix + 4 floats for color + 1 float for filling (0 = no fill ; )
-    float x = ((float) (rand() % 800) - 400) / 400.0f; // random x position between -1.0 and 1.0
-    float y = ((float) (rand() % 600) - 300) / 300.0f; // random y position between -1.0 and 1.0
-    s_rectangle_instance_data[(s_num_draw_rectangles - 1) * 3] = x;
-    s_rectangle_instance_data[(s_num_draw_rectangles - 1) * 3 + 1] = y;
-    s_rectangle_instance_data[(s_num_draw_rectangles - 1) * 3 + 2] = 0.0f;
+    if (s_fill) {
+        // NOTE renders the fill mesh
+
+        // NOTE resize the current instance data to fit with the added rectangle
+        s_num_draw_rectangles++;
+        if (!s_rectangle_instance_data && !s_num_draw_rectangles) {
+            s_rectangle_instance_data = (float *) malloc(s_rectangle_instance_data_size * s_num_draw_rectangles);
+            if (s_rectangle_instance_data == NULL) {
+                fprintf(stderr, "[ERROR] failed to allocate any rectangle instance data.\n");
+                s_num_draw_rectangles--;
+                return;
+            }
+        }
+        else {
+            float *new_rectangle_instance_data = (float *) realloc(s_rectangle_instance_data, s_rectangle_instance_data_size * s_num_draw_rectangles);
+            if (new_rectangle_instance_data == NULL) {
+                fprintf(stderr, "[ERROR] failed to reallocate new rectangle instance data.\n");
+                s_num_draw_rectangles--;
+                return;
+            } else {
+                s_rectangle_instance_data = new_rectangle_instance_data;
+            }
+        }
+
+        // NOTE add the instance data
+        // NOTE 16 floats for mvp matrix + 4 floats for color
+
+        // TODO mvp matrix
+
+        // TODO color vector
+
+    }
 }
 
 void canvash_rotate_2D(float rad) {
     // TODO here we will change current_transform to be rotated
+}
+
+void canvash_fill_color(vec4 color) {
+    s_fill = true;
+    glm_vec4_copy(color, s_fill_color);
+}
+
+void canvash_outline_color(vec4 color) {
+    s_outline = true;
+    glm_vec4_copy(color, s_outline_color);
+}
+
+void canvash_no_fill() {
+    s_fill = false;
+}
+
+void canvash_no_outline() {
+    s_outline = false;
+}
+
+void canvash_outline_size(float size) {
+    s_outline_size = size;
 }
 

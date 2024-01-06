@@ -1,12 +1,12 @@
 #include "canvash_lib/canvash.h"
 
-
+// NOTE this is a simple key callback function, modify it to your liking
 void key_callback(int key, int scancode, int action) {
     if (CANVASH_KEY_IS_PRESSED(key, action, CANVASH_KEY_E)) {
         printf("Hewwo, key callback work!\n");
     }
 }
-
+// NOTE this is a simple mouse callback function, modify it to your liking
 void mouse_callback(int button, int action, float xpos, float ypos) {
     if (CANVASH_BUTTON_IS_PRESSED(button, action, CANVASH_MOUSE_BUTTON_LEFT)) {
         printf("Hewwo, mouse callback work at %f %f!\n", xpos, ypos);
@@ -14,7 +14,7 @@ void mouse_callback(int button, int action, float xpos, float ypos) {
 }
 
 int main() {
-
+    // NOTE initialize canvash with size 800x600, title "canvash_dev", with an icon, 2D mode (check if it failed) and set the key and mouse callback
     if (!canvash_init("canvash_dev", 800, 600, "res/img/icon.png", twodimensional)) {
         printf("[USER] failed initialization.\n");
         return -1;
@@ -22,6 +22,7 @@ int main() {
     canvash_set_key_callback(key_callback);
     canvash_set_mouse_callback(mouse_callback);
 
+    // NOTE this is your main loop, it's like the draw() function in p5.js
     while (!canvash_running()) {
         canvash_clear_screen((vec3){0.2f, 0.3f, 0.3f});
 
@@ -34,7 +35,7 @@ int main() {
         canvash_render();
     }
 
+    // NOTE do not forget to terminate, otherwise there will be memory leaks
     canvash_terminate();
     return 0;
-
 }
