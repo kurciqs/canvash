@@ -25,8 +25,10 @@
 #endif
 
 #if defined( __SSE__ ) || defined( __SSE2__ )
+
 #  include <xmmintrin.h>
 #  include <emmintrin.h>
+
 #  define CGLM_SSE_FP 1
 #  ifndef CGLM_SIMD_x86
 #    define CGLM_SIMD_x86
@@ -34,7 +36,9 @@
 #endif
 
 #if defined(__SSE3__)
+
 #  include <pmmintrin.h>
+
 #  ifndef CGLM_SIMD_x86
 #    define CGLM_SIMD_x86
 #  endif
@@ -113,7 +117,9 @@
 #endif
 
 #if defined(CGLM_SIMD_x86) && !defined(CGLM_SIMD_WASM)
+
 #  include "x86.h"
+
 #endif
 
 #if defined(CGLM_SIMD_ARM)

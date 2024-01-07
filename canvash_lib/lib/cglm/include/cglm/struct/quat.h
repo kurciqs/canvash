@@ -79,9 +79,9 @@
 CGLM_INLINE
 versors
 glms_quat_(identity)(void) {
-  versors dest;
-  glm_quat_identity(dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_identity(dest.raw);
+    return dest;
 }
 
 /*!
@@ -94,13 +94,13 @@ glms_quat_(identity)(void) {
  */
 CGLM_INLINE
 void
-glms_quat_(identity_array)(versors * __restrict q, size_t count) {
-  CGLM_ALIGN(16) versor v = GLM_QUAT_IDENTITY_INIT;
-  size_t i;
+glms_quat_(identity_array)(versors *__restrict q, size_t count) {
+    CGLM_ALIGN(16) versor v = GLM_QUAT_IDENTITY_INIT;
+    size_t i;
 
-  for (i = 0; i < count; i++) {
-    glm_vec4_copy(v, q[i].raw);
-  }
+    for (i = 0; i < count; i++) {
+        glm_vec4_copy(v, q[i].raw);
+    }
 }
 
 /*!
@@ -115,9 +115,9 @@ glms_quat_(identity_array)(versors * __restrict q, size_t count) {
 CGLM_INLINE
 versors
 glms_quat_(init)(float x, float y, float z, float w) {
-  versors dest;
-  glm_quat_init(dest.raw, x, y, z, w);
-  return dest;
+    versors dest;
+    glm_quat_init(dest.raw, x, y, z, w);
+    return dest;
 }
 
 /*!
@@ -130,9 +130,9 @@ glms_quat_(init)(float x, float y, float z, float w) {
 CGLM_INLINE
 versors
 glms_quatv(float angle, vec3s axis) {
-  versors dest;
-  glm_quatv(dest.raw, angle, axis.raw);
-  return dest;
+    versors dest;
+    glm_quatv(dest.raw, angle, axis.raw);
+    return dest;
 }
 
 /*!
@@ -147,9 +147,9 @@ glms_quatv(float angle, vec3s axis) {
 CGLM_INLINE
 versors
 glms_quat(float angle, float x, float y, float z) {
-  versors dest;
-  glm_quat(dest.raw, angle, x, y, z);
-  return dest;
+    versors dest;
+    glm_quat(dest.raw, angle, x, y, z);
+    return dest;
 }
 
 /*!
@@ -162,9 +162,9 @@ glms_quat(float angle, float x, float y, float z) {
 CGLM_INLINE
 versors
 glms_quat_(from_vecs)(vec3s a, vec3s b) {
-  versors dest;
-  glm_quat_from_vecs(a.raw, b.raw, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_from_vecs(a.raw, b.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -175,7 +175,7 @@ glms_quat_(from_vecs)(vec3s a, vec3s b) {
 CGLM_INLINE
 float
 glms_quat_(norm)(versors q) {
-  return glm_quat_norm(q.raw);
+    return glm_quat_norm(q.raw);
 }
 
 /*!
@@ -187,9 +187,9 @@ glms_quat_(norm)(versors q) {
 CGLM_INLINE
 versors
 glms_quat_(normalize)(versors q) {
-  versors dest;
-  glm_quat_normalize_to(q.raw, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_normalize_to(q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -202,7 +202,7 @@ glms_quat_(normalize)(versors q) {
 CGLM_INLINE
 float
 glms_quat_(dot)(versors p, versors q) {
-  return glm_quat_dot(p.raw, q.raw);
+    return glm_quat_dot(p.raw, q.raw);
 }
 
 /*!
@@ -214,9 +214,9 @@ glms_quat_(dot)(versors p, versors q) {
 CGLM_INLINE
 versors
 glms_quat_(conjugate)(versors q) {
-  versors dest;
-  glm_quat_conjugate(q.raw, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_conjugate(q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -228,9 +228,9 @@ glms_quat_(conjugate)(versors q) {
 CGLM_INLINE
 versors
 glms_quat_(inv)(versors q) {
-  versors dest;
-  glm_quat_inv(q.raw, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_inv(q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -243,9 +243,9 @@ glms_quat_(inv)(versors q) {
 CGLM_INLINE
 versors
 glms_quat_(add)(versors p, versors q) {
-  versors dest;
-  glm_quat_add(p.raw, q.raw, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_add(p.raw, q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -258,9 +258,9 @@ glms_quat_(add)(versors p, versors q) {
 CGLM_INLINE
 versors
 glms_quat_(sub)(versors p, versors q) {
-  versors dest;
-  glm_quat_sub(p.raw, q.raw, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_sub(p.raw, q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -271,9 +271,9 @@ glms_quat_(sub)(versors p, versors q) {
 CGLM_INLINE
 vec3s
 glms_quat_(imagn)(versors q) {
-  vec3s dest;
-  glm_normalize_to(q.raw, dest.raw);
-  return dest;
+    vec3s dest;
+    glm_normalize_to(q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -284,7 +284,7 @@ glms_quat_(imagn)(versors q) {
 CGLM_INLINE
 float
 glms_quat_(imaglen)(versors q) {
-  return glm_quat_imaglen(q.raw);
+    return glm_quat_imaglen(q.raw);
 }
 
 /*!
@@ -295,7 +295,7 @@ glms_quat_(imaglen)(versors q) {
 CGLM_INLINE
 float
 glms_quat_(angle)(versors q) {
-  return glm_quat_angle(q.raw);
+    return glm_quat_angle(q.raw);
 }
 
 /*!
@@ -307,9 +307,9 @@ glms_quat_(angle)(versors q) {
 CGLM_INLINE
 vec3s
 glms_quat_(axis)(versors q) {
-  vec3s dest;
-  glm_quat_axis(q.raw, dest.raw);
-  return dest;
+    vec3s dest;
+    glm_quat_axis(q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -327,9 +327,9 @@ glms_quat_(axis)(versors q) {
 CGLM_INLINE
 versors
 glms_quat_(mul)(versors p, versors q) {
-  versors dest;
-  glm_quat_mul(p.raw, q.raw, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_mul(p.raw, q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -341,9 +341,9 @@ glms_quat_(mul)(versors p, versors q) {
 CGLM_INLINE
 mat4s
 glms_quat_(mat4)(versors q) {
-  mat4s dest;
-  glm_quat_mat4(q.raw, dest.raw);
-  return dest;
+    mat4s dest;
+    glm_quat_mat4(q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -355,9 +355,9 @@ glms_quat_(mat4)(versors q) {
 CGLM_INLINE
 mat4s
 glms_quat_(mat4t)(versors q) {
-  mat4s dest;
-  glm_quat_mat4t(q.raw, dest.raw);
-  return dest;
+    mat4s dest;
+    glm_quat_mat4t(q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -369,9 +369,9 @@ glms_quat_(mat4t)(versors q) {
 CGLM_INLINE
 mat3s
 glms_quat_(mat3)(versors q) {
-  mat3s dest;
-  glm_quat_mat3(q.raw, dest.raw);
-  return dest;
+    mat3s dest;
+    glm_quat_mat3(q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -383,9 +383,9 @@ glms_quat_(mat3)(versors q) {
 CGLM_INLINE
 mat3s
 glms_quat_(mat3t)(versors q) {
-  mat3s dest;
-  glm_quat_mat3t(q.raw, dest.raw);
-  return dest;
+    mat3s dest;
+    glm_quat_mat3t(q.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -400,9 +400,9 @@ glms_quat_(mat3t)(versors q) {
 CGLM_INLINE
 versors
 glms_quat_(lerp)(versors from, versors to, float t) {
-  versors dest;
-  glm_quat_lerp(from.raw, to.raw, t, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_lerp(from.raw, to.raw, t, dest.raw);
+    return dest;
 }
 
 /*!
@@ -417,9 +417,9 @@ glms_quat_(lerp)(versors from, versors to, float t) {
 CGLM_INLINE
 versors
 glms_quat_(lerpc)(versors from, versors to, float t) {
-  versors dest;
-  glm_quat_lerpc(from.raw, to.raw, t, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_lerpc(from.raw, to.raw, t, dest.raw);
+    return dest;
 }
 
 /*!
@@ -435,9 +435,9 @@ glms_quat_(lerpc)(versors from, versors to, float t) {
 CGLM_INLINE
 versors
 glms_quat_(nlerp)(versors from, versors to, float t) {
-  versors dest;
-  glm_quat_nlerp(from.raw, to.raw, t, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_nlerp(from.raw, to.raw, t, dest.raw);
+    return dest;
 }
 
 /*!
@@ -452,9 +452,9 @@ glms_quat_(nlerp)(versors from, versors to, float t) {
 CGLM_INLINE
 versors
 glms_quat_(slerp)(versors from, versors to, float t) {
-  versors dest;
-  glm_quat_slerp(from.raw, to.raw, t, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_slerp(from.raw, to.raw, t, dest.raw);
+    return dest;
 }
 
 /*!
@@ -467,9 +467,9 @@ glms_quat_(slerp)(versors from, versors to, float t) {
 CGLM_INLINE
 mat4s
 glms_quat_(look)(vec3s eye, versors ori) {
-  mat4s dest;
-  glm_quat_look(eye.raw, ori.raw, dest.raw);
-  return dest;
+    mat4s dest;
+    glm_quat_look(eye.raw, ori.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -482,9 +482,9 @@ glms_quat_(look)(vec3s eye, versors ori) {
 CGLM_INLINE
 versors
 glms_quat_(for)(vec3s dir, vec3s up) {
-  versors dest;
-  glm_quat_for(dir.raw, up.raw, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_for(dir.raw, up.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -499,9 +499,9 @@ glms_quat_(for)(vec3s dir, vec3s up) {
 CGLM_INLINE
 versors
 glms_quat_(forp)(vec3s from, vec3s to, vec3s up) {
-  versors dest;
-  glm_quat_forp(from.raw, to.raw, up.raw, dest.raw);
-  return dest;
+    versors dest;
+    glm_quat_forp(from.raw, to.raw, up.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -514,9 +514,9 @@ glms_quat_(forp)(vec3s from, vec3s to, vec3s up) {
 CGLM_INLINE
 vec3s
 glms_quat_(rotatev)(versors q, vec3s v) {
-  vec3s dest;
-  glm_quat_rotatev(q.raw, v.raw, dest.raw);
-  return dest;
+    vec3s dest;
+    glm_quat_rotatev(q.raw, v.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -529,8 +529,8 @@ glms_quat_(rotatev)(versors q, vec3s v) {
 CGLM_INLINE
 mat4s
 glms_quat_(rotate)(mat4s m, versors q) {
-  glm_quat_rotate(m.raw, q.raw, m.raw);
-  return m;
+    glm_quat_rotate(m.raw, q.raw, m.raw);
+    return m;
 }
 
 /*!
@@ -543,8 +543,8 @@ glms_quat_(rotate)(mat4s m, versors q) {
 CGLM_INLINE
 mat4s
 glms_quat_(rotate_at)(mat4s m, versors q, vec3s pivot) {
-  glm_quat_rotate_at(m.raw, q.raw, pivot.raw);
-  return m;
+    glm_quat_rotate_at(m.raw, q.raw, pivot.raw);
+    return m;
 }
 
 /*!
@@ -561,9 +561,9 @@ glms_quat_(rotate_at)(mat4s m, versors q, vec3s pivot) {
 CGLM_INLINE
 mat4s
 glms_quat_(rotate_atm)(versors q, vec3s pivot) {
-  mat4s dest;
-  glm_quat_rotate_atm(dest.raw, q.raw, pivot.raw);
-  return dest;
+    mat4s dest;
+    glm_quat_rotate_atm(dest.raw, q.raw, pivot.raw);
+    return dest;
 }
 
 /*!
@@ -574,10 +574,10 @@ glms_quat_(rotate_atm)(versors q, vec3s pivot) {
  */
 CGLM_INLINE
 versors
-glms_quat_(make)(float * __restrict src) {
-  versors dest;
-  glm_quat_make(src, dest.raw);
-  return dest;
+glms_quat_(make)(float *__restrict src) {
+    versors dest;
+    glm_quat_make(src, dest.raw);
+    return dest;
 }
 
 #endif /* cglms_quat_h */

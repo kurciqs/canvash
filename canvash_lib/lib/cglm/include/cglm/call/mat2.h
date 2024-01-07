@@ -23,7 +23,7 @@ glmc_mat2_identity(mat2 mat);
 
 CGLM_EXPORT
 void
-glmc_mat2_identity_array(mat2 * __restrict mat, size_t count);
+glmc_mat2_identity_array(mat2 *__restrict mat, size_t count);
 
 CGLM_EXPORT
 void
@@ -75,7 +75,7 @@ glmc_mat2_rmc(vec2 r, mat2 m, vec2 c);
 
 CGLM_EXPORT
 void
-glmc_mat2_make(float * __restrict src, mat2 dest);
+glmc_mat2_make(float *__restrict src, mat2 dest);
 
 #ifdef __cplusplus
 }

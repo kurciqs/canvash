@@ -64,7 +64,9 @@
 #include "affine.h"
 
 #ifdef CGLM_SSE_FP
+
 #  include "simd/sse2/quat.h"
+
 #endif
 
 #ifdef CGLM_NEON_FP
@@ -98,8 +100,8 @@ CGLM_INLINE void glm_quat_normalize(versor q);
 CGLM_INLINE
 void
 glm_quat_identity(versor q) {
-  CGLM_ALIGN(16) versor v = GLM_QUAT_IDENTITY_INIT;
-  glm_vec4_copy(v, q);
+    CGLM_ALIGN(16) versor v = GLM_QUAT_IDENTITY_INIT;
+    glm_vec4_copy(v, q);
 }
 
 /*!
@@ -112,13 +114,13 @@ glm_quat_identity(versor q) {
  */
 CGLM_INLINE
 void
-glm_quat_identity_array(versor * __restrict q, size_t count) {
-  CGLM_ALIGN(16) versor v = GLM_QUAT_IDENTITY_INIT;
-  size_t i;
+glm_quat_identity_array(versor *__restrict q, size_t count) {
+    CGLM_ALIGN(16) versor v = GLM_QUAT_IDENTITY_INIT;
+    size_t i;
 
-  for (i = 0; i < count; i++) {
-    glm_vec4_copy(v, q[i]);
-  }
+    for (i = 0; i < count; i++) {
+        glm_vec4_copy(v, q[i]);
+    }
 }
 
 /*!
@@ -133,10 +135,10 @@ glm_quat_identity_array(versor * __restrict q, size_t count) {
 CGLM_INLINE
 void
 glm_quat_init(versor q, float x, float y, float z, float w) {
-  q[0] = x;
-  q[1] = y;
-  q[2] = z;
-  q[3] = w;
+    q[0] = x;
+    q[1] = y;
+    q[2] = z;
+    q[3] = w;
 }
 
 /*!
@@ -149,19 +151,19 @@ glm_quat_init(versor q, float x, float y, float z, float w) {
 CGLM_INLINE
 void
 glm_quatv(versor q, float angle, vec3 axis) {
-  CGLM_ALIGN(8) vec3 k;
-  float a, c, s;
+    CGLM_ALIGN(8) vec3 k;
+    float a, c, s;
 
-  a = angle * 0.5f;
-  c = cosf(a);
-  s = sinf(a);
+    a = angle * 0.5f;
+    c = cosf(a);
+    s = sinf(a);
 
-  glm_normalize_to(axis, k);
+    glm_normalize_to(axis, k);
 
-  q[0] = s * k[0];
-  q[1] = s * k[1];
-  q[2] = s * k[2];
-  q[3] = c;
+    q[0] = s * k[0];
+    q[1] = s * k[1];
+    q[2] = s * k[2];
+    q[3] = c;
 }
 
 /*!
@@ -176,8 +178,8 @@ glm_quatv(versor q, float angle, vec3 axis) {
 CGLM_INLINE
 void
 glm_quat(versor q, float angle, float x, float y, float z) {
-  CGLM_ALIGN(8) vec3 axis = {x, y, z};
-  glm_quatv(q, angle, axis);
+    CGLM_ALIGN(8) vec3 axis = {x, y, z};
+    glm_quatv(q, angle, axis);
 }
 
 /*!
@@ -189,7 +191,7 @@ glm_quat(versor q, float angle, float x, float y, float z) {
 CGLM_INLINE
 void
 glm_quat_copy(versor q, versor dest) {
-  glm_vec4_copy(q, dest);
+    glm_vec4_copy(q, dest);
 }
 
 /*!
@@ -202,25 +204,25 @@ glm_quat_copy(versor q, versor dest) {
 CGLM_INLINE
 void
 glm_quat_from_vecs(vec3 a, vec3 b, versor dest) {
-  CGLM_ALIGN(8) vec3 axis;
-  float cos_theta;
-  float cos_half_theta;
+    CGLM_ALIGN(8) vec3 axis;
+    float cos_theta;
+    float cos_half_theta;
 
-  cos_theta = glm_vec3_dot(a, b);
-  if (cos_theta >= 1.f - GLM_FLT_EPSILON) {  /*  a ∥ b  */
-    glm_quat_identity(dest);
-    return;
-  }
-  if (cos_theta < -1.f + GLM_FLT_EPSILON) {  /*  angle(a, b) = π  */
-    glm_vec3_ortho(a, axis);
-    cos_half_theta = 0.f;                    /*  cos π/2 */
-  } else {
-    glm_vec3_cross(a, b, axis);
-    cos_half_theta = 1.0f + cos_theta;       /*  cos 0 + cos θ  */
-  }
+    cos_theta = glm_vec3_dot(a, b);
+    if (cos_theta >= 1.f - GLM_FLT_EPSILON) {  /*  a ∥ b  */
+        glm_quat_identity(dest);
+        return;
+    }
+    if (cos_theta < -1.f + GLM_FLT_EPSILON) {  /*  angle(a, b) = π  */
+        glm_vec3_ortho(a, axis);
+        cos_half_theta = 0.f;                    /*  cos π/2 */
+    } else {
+        glm_vec3_cross(a, b, axis);
+        cos_half_theta = 1.0f + cos_theta;       /*  cos 0 + cos θ  */
+    }
 
-  glm_quat_init(dest, axis[0], axis[1], axis[2], cos_half_theta);
-  glm_quat_normalize(dest);
+    glm_quat_init(dest, axis[0], axis[1], axis[2], cos_half_theta);
+    glm_quat_normalize(dest);
 }
 
 /*!
@@ -231,7 +233,7 @@ glm_quat_from_vecs(vec3 a, vec3 b, versor dest) {
 CGLM_INLINE
 float
 glm_quat_norm(versor q) {
-  return glm_vec4_norm(q);
+    return glm_vec4_norm(q);
 }
 
 /*!
@@ -244,45 +246,45 @@ CGLM_INLINE
 void
 glm_quat_normalize_to(versor q, versor dest) {
 #if defined(__wasm__) && defined(__wasm_simd128__)
-  glmm_128 xdot, x0;
-  float  dot;
+    glmm_128 xdot, x0;
+    float  dot;
 
-  x0   = glmm_load(q);
-  xdot = glmm_vdot(x0, x0);
-  /* dot  = _mm_cvtss_f32(xdot); */
-  dot  = wasm_f32x4_extract_lane(xdot, 0);
+    x0   = glmm_load(q);
+    xdot = glmm_vdot(x0, x0);
+    /* dot  = _mm_cvtss_f32(xdot); */
+    dot  = wasm_f32x4_extract_lane(xdot, 0);
 
-  if (dot <= 0.0f) {
-    glm_quat_identity(dest);
-    return;
-  }
+    if (dot <= 0.0f) {
+      glm_quat_identity(dest);
+      return;
+    }
 
-  glmm_store(dest, wasm_f32x4_div(x0, wasm_f32x4_sqrt(xdot)));
+    glmm_store(dest, wasm_f32x4_div(x0, wasm_f32x4_sqrt(xdot)));
 #elif defined( __SSE2__ ) || defined( __SSE2__ )
-  __m128 xdot, x0;
-  float  dot;
+    __m128 xdot, x0;
+    float dot;
 
-  x0   = glmm_load(q);
-  xdot = glmm_vdot(x0, x0);
-  dot  = _mm_cvtss_f32(xdot);
+    x0 = glmm_load(q);
+    xdot = glmm_vdot(x0, x0);
+    dot = _mm_cvtss_f32(xdot);
 
-  if (dot <= 0.0f) {
-    glm_quat_identity(dest);
-    return;
-  }
+    if (dot <= 0.0f) {
+        glm_quat_identity(dest);
+        return;
+    }
 
-  glmm_store(dest, _mm_div_ps(x0, _mm_sqrt_ps(xdot)));
+    glmm_store(dest, _mm_div_ps(x0, _mm_sqrt_ps(xdot)));
 #else
-  float dot;
+    float dot;
 
-  dot = glm_vec4_norm2(q);
+    dot = glm_vec4_norm2(q);
 
-  if (dot <= 0.0f) {
-    glm_quat_identity(dest);
-    return;
-  }
+    if (dot <= 0.0f) {
+      glm_quat_identity(dest);
+      return;
+    }
 
-  glm_vec4_scale(q, 1.0f / sqrtf(dot), dest);
+    glm_vec4_scale(q, 1.0f / sqrtf(dot), dest);
 #endif
 }
 
@@ -294,7 +296,7 @@ glm_quat_normalize_to(versor q, versor dest) {
 CGLM_INLINE
 void
 glm_quat_normalize(versor q) {
-  glm_quat_normalize_to(q, q);
+    glm_quat_normalize_to(q, q);
 }
 
 /*!
@@ -306,7 +308,7 @@ glm_quat_normalize(versor q) {
 CGLM_INLINE
 float
 glm_quat_dot(versor p, versor q) {
-  return glm_vec4_dot(p, q);
+    return glm_vec4_dot(p, q);
 }
 
 /*!
@@ -318,8 +320,8 @@ glm_quat_dot(versor p, versor q) {
 CGLM_INLINE
 void
 glm_quat_conjugate(versor q, versor dest) {
-  glm_vec4_negate_to(q, dest);
-  dest[3] = -dest[3];
+    glm_vec4_negate_to(q, dest);
+    dest[3] = -dest[3];
 }
 
 /*!
@@ -331,9 +333,9 @@ glm_quat_conjugate(versor q, versor dest) {
 CGLM_INLINE
 void
 glm_quat_inv(versor q, versor dest) {
-  CGLM_ALIGN(16) versor conj;
-  glm_quat_conjugate(q, conj);
-  glm_vec4_scale(conj, 1.0f / glm_vec4_norm2(q), dest);
+    CGLM_ALIGN(16) versor conj;
+    glm_quat_conjugate(q, conj);
+    glm_vec4_scale(conj, 1.0f / glm_vec4_norm2(q), dest);
 }
 
 /*!
@@ -346,7 +348,7 @@ glm_quat_inv(versor q, versor dest) {
 CGLM_INLINE
 void
 glm_quat_add(versor p, versor q, versor dest) {
-  glm_vec4_add(p, q, dest);
+    glm_vec4_add(p, q, dest);
 }
 
 /*!
@@ -359,7 +361,7 @@ glm_quat_add(versor p, versor q, versor dest) {
 CGLM_INLINE
 void
 glm_quat_sub(versor p, versor q, versor dest) {
-  glm_vec4_sub(p, q, dest);
+    glm_vec4_sub(p, q, dest);
 }
 
 /*!
@@ -370,7 +372,7 @@ glm_quat_sub(versor p, versor q, versor dest) {
 CGLM_INLINE
 float
 glm_quat_real(versor q) {
-  return q[3];
+    return q[3];
 }
 
 /*!
@@ -382,9 +384,9 @@ glm_quat_real(versor q) {
 CGLM_INLINE
 void
 glm_quat_imag(versor q, vec3 dest) {
-  dest[0] = q[0];
-  dest[1] = q[1];
-  dest[2] = q[2];
+    dest[0] = q[0];
+    dest[1] = q[1];
+    dest[2] = q[2];
 }
 
 /*!
@@ -395,7 +397,7 @@ glm_quat_imag(versor q, vec3 dest) {
 CGLM_INLINE
 void
 glm_quat_imagn(versor q, vec3 dest) {
-  glm_normalize_to(q, dest);
+    glm_normalize_to(q, dest);
 }
 
 /*!
@@ -406,7 +408,7 @@ glm_quat_imagn(versor q, vec3 dest) {
 CGLM_INLINE
 float
 glm_quat_imaglen(versor q) {
-  return glm_vec3_norm(q);
+    return glm_vec3_norm(q);
 }
 
 /*!
@@ -417,12 +419,12 @@ glm_quat_imaglen(versor q) {
 CGLM_INLINE
 float
 glm_quat_angle(versor q) {
-  /*
-   sin(theta / 2) = length(x*x + y*y + z*z)
-   cos(theta / 2) = w
-   theta          = 2 * atan(sin(theta / 2) / cos(theta / 2))
-   */
-  return 2.0f * atan2f(glm_quat_imaglen(q), glm_quat_real(q));
+    /*
+     sin(theta / 2) = length(x*x + y*y + z*z)
+     cos(theta / 2) = w
+     theta          = 2 * atan(sin(theta / 2) / cos(theta / 2))
+     */
+    return 2.0f * atan2f(glm_quat_imaglen(q), glm_quat_real(q));
 }
 
 /*!
@@ -434,7 +436,7 @@ glm_quat_angle(versor q) {
 CGLM_INLINE
 void
 glm_quat_axis(versor q, vec3 dest) {
-  glm_quat_imagn(q, dest);
+    glm_quat_imagn(q, dest);
 }
 
 /*!
@@ -452,23 +454,23 @@ glm_quat_axis(versor q, vec3 dest) {
 CGLM_INLINE
 void
 glm_quat_mul(versor p, versor q, versor dest) {
-  /*
-    + (a1 b2 + b1 a2 + c1 d2 − d1 c2)i
-    + (a1 c2 − b1 d2 + c1 a2 + d1 b2)j
-    + (a1 d2 + b1 c2 − c1 b2 + d1 a2)k
-       a1 a2 − b1 b2 − c1 c2 − d1 d2
-   */
+    /*
+      + (a1 b2 + b1 a2 + c1 d2 − d1 c2)i
+      + (a1 c2 − b1 d2 + c1 a2 + d1 b2)j
+      + (a1 d2 + b1 c2 − c1 b2 + d1 a2)k
+         a1 a2 − b1 b2 − c1 c2 − d1 d2
+     */
 #if defined(__wasm__) && defined(__wasm_simd128__)
-  glm_quat_mul_wasm(p, q, dest);
+    glm_quat_mul_wasm(p, q, dest);
 #elif defined( __SSE__ ) || defined( __SSE2__ )
-  glm_quat_mul_sse2(p, q, dest);
+    glm_quat_mul_sse2(p, q, dest);
 #elif defined(CGLM_NEON_FP)
-  glm_quat_mul_neon(p, q, dest);
+    glm_quat_mul_neon(p, q, dest);
 #else
-  dest[0] = p[3] * q[0] + p[0] * q[3] + p[1] * q[2] - p[2] * q[1];
-  dest[1] = p[3] * q[1] - p[0] * q[2] + p[1] * q[3] + p[2] * q[0];
-  dest[2] = p[3] * q[2] + p[0] * q[1] - p[1] * q[0] + p[2] * q[3];
-  dest[3] = p[3] * q[3] - p[0] * q[0] - p[1] * q[1] - p[2] * q[2];
+    dest[0] = p[3] * q[0] + p[0] * q[3] + p[1] * q[2] - p[2] * q[1];
+    dest[1] = p[3] * q[1] - p[0] * q[2] + p[1] * q[3] + p[2] * q[0];
+    dest[2] = p[3] * q[2] + p[0] * q[1] - p[1] * q[0] + p[2] * q[3];
+    dest[3] = p[3] * q[3] - p[0] * q[0] - p[1] * q[1] - p[2] * q[2];
 #endif
 }
 
@@ -481,42 +483,48 @@ glm_quat_mul(versor p, versor q, versor dest) {
 CGLM_INLINE
 void
 glm_quat_mat4(versor q, mat4 dest) {
-  float w, x, y, z,
-        xx, yy, zz,
-        xy, yz, xz,
-        wx, wy, wz, norm, s;
+    float w, x, y, z,
+            xx, yy, zz,
+            xy, yz, xz,
+            wx, wy, wz, norm, s;
 
-  norm = glm_quat_norm(q);
-  s    = norm > 0.0f ? 2.0f / norm : 0.0f;
+    norm = glm_quat_norm(q);
+    s = norm > 0.0f ? 2.0f / norm : 0.0f;
 
-  x = q[0];
-  y = q[1];
-  z = q[2];
-  w = q[3];
+    x = q[0];
+    y = q[1];
+    z = q[2];
+    w = q[3];
 
-  xx = s * x * x;   xy = s * x * y;   wx = s * w * x;
-  yy = s * y * y;   yz = s * y * z;   wy = s * w * y;
-  zz = s * z * z;   xz = s * x * z;   wz = s * w * z;
+    xx = s * x * x;
+    xy = s * x * y;
+    wx = s * w * x;
+    yy = s * y * y;
+    yz = s * y * z;
+    wy = s * w * y;
+    zz = s * z * z;
+    xz = s * x * z;
+    wz = s * w * z;
 
-  dest[0][0] = 1.0f - yy - zz;
-  dest[1][1] = 1.0f - xx - zz;
-  dest[2][2] = 1.0f - xx - yy;
+    dest[0][0] = 1.0f - yy - zz;
+    dest[1][1] = 1.0f - xx - zz;
+    dest[2][2] = 1.0f - xx - yy;
 
-  dest[0][1] = xy + wz;
-  dest[1][2] = yz + wx;
-  dest[2][0] = xz + wy;
+    dest[0][1] = xy + wz;
+    dest[1][2] = yz + wx;
+    dest[2][0] = xz + wy;
 
-  dest[1][0] = xy - wz;
-  dest[2][1] = yz - wx;
-  dest[0][2] = xz - wy;
+    dest[1][0] = xy - wz;
+    dest[2][1] = yz - wx;
+    dest[0][2] = xz - wy;
 
-  dest[0][3] = 0.0f;
-  dest[1][3] = 0.0f;
-  dest[2][3] = 0.0f;
-  dest[3][0] = 0.0f;
-  dest[3][1] = 0.0f;
-  dest[3][2] = 0.0f;
-  dest[3][3] = 1.0f;
+    dest[0][3] = 0.0f;
+    dest[1][3] = 0.0f;
+    dest[2][3] = 0.0f;
+    dest[3][0] = 0.0f;
+    dest[3][1] = 0.0f;
+    dest[3][2] = 0.0f;
+    dest[3][3] = 1.0f;
 }
 
 /*!
@@ -528,42 +536,48 @@ glm_quat_mat4(versor q, mat4 dest) {
 CGLM_INLINE
 void
 glm_quat_mat4t(versor q, mat4 dest) {
-  float w, x, y, z,
-        xx, yy, zz,
-        xy, yz, xz,
-        wx, wy, wz, norm, s;
+    float w, x, y, z,
+            xx, yy, zz,
+            xy, yz, xz,
+            wx, wy, wz, norm, s;
 
-  norm = glm_quat_norm(q);
-  s    = norm > 0.0f ? 2.0f / norm : 0.0f;
+    norm = glm_quat_norm(q);
+    s = norm > 0.0f ? 2.0f / norm : 0.0f;
 
-  x = q[0];
-  y = q[1];
-  z = q[2];
-  w = q[3];
+    x = q[0];
+    y = q[1];
+    z = q[2];
+    w = q[3];
 
-  xx = s * x * x;   xy = s * x * y;   wx = s * w * x;
-  yy = s * y * y;   yz = s * y * z;   wy = s * w * y;
-  zz = s * z * z;   xz = s * x * z;   wz = s * w * z;
+    xx = s * x * x;
+    xy = s * x * y;
+    wx = s * w * x;
+    yy = s * y * y;
+    yz = s * y * z;
+    wy = s * w * y;
+    zz = s * z * z;
+    xz = s * x * z;
+    wz = s * w * z;
 
-  dest[0][0] = 1.0f - yy - zz;
-  dest[1][1] = 1.0f - xx - zz;
-  dest[2][2] = 1.0f - xx - yy;
+    dest[0][0] = 1.0f - yy - zz;
+    dest[1][1] = 1.0f - xx - zz;
+    dest[2][2] = 1.0f - xx - yy;
 
-  dest[1][0] = xy + wz;
-  dest[2][1] = yz + wx;
-  dest[0][2] = xz + wy;
+    dest[1][0] = xy + wz;
+    dest[2][1] = yz + wx;
+    dest[0][2] = xz + wy;
 
-  dest[0][1] = xy - wz;
-  dest[1][2] = yz - wx;
-  dest[2][0] = xz - wy;
+    dest[0][1] = xy - wz;
+    dest[1][2] = yz - wx;
+    dest[2][0] = xz - wy;
 
-  dest[0][3] = 0.0f;
-  dest[1][3] = 0.0f;
-  dest[2][3] = 0.0f;
-  dest[3][0] = 0.0f;
-  dest[3][1] = 0.0f;
-  dest[3][2] = 0.0f;
-  dest[3][3] = 1.0f;
+    dest[0][3] = 0.0f;
+    dest[1][3] = 0.0f;
+    dest[2][3] = 0.0f;
+    dest[3][0] = 0.0f;
+    dest[3][1] = 0.0f;
+    dest[3][2] = 0.0f;
+    dest[3][3] = 1.0f;
 }
 
 /*!
@@ -575,34 +589,40 @@ glm_quat_mat4t(versor q, mat4 dest) {
 CGLM_INLINE
 void
 glm_quat_mat3(versor q, mat3 dest) {
-  float w, x, y, z,
-        xx, yy, zz,
-        xy, yz, xz,
-        wx, wy, wz, norm, s;
+    float w, x, y, z,
+            xx, yy, zz,
+            xy, yz, xz,
+            wx, wy, wz, norm, s;
 
-  norm = glm_quat_norm(q);
-  s    = norm > 0.0f ? 2.0f / norm : 0.0f;
+    norm = glm_quat_norm(q);
+    s = norm > 0.0f ? 2.0f / norm : 0.0f;
 
-  x = q[0];
-  y = q[1];
-  z = q[2];
-  w = q[3];
+    x = q[0];
+    y = q[1];
+    z = q[2];
+    w = q[3];
 
-  xx = s * x * x;   xy = s * x * y;   wx = s * w * x;
-  yy = s * y * y;   yz = s * y * z;   wy = s * w * y;
-  zz = s * z * z;   xz = s * x * z;   wz = s * w * z;
+    xx = s * x * x;
+    xy = s * x * y;
+    wx = s * w * x;
+    yy = s * y * y;
+    yz = s * y * z;
+    wy = s * w * y;
+    zz = s * z * z;
+    xz = s * x * z;
+    wz = s * w * z;
 
-  dest[0][0] = 1.0f - yy - zz;
-  dest[1][1] = 1.0f - xx - zz;
-  dest[2][2] = 1.0f - xx - yy;
+    dest[0][0] = 1.0f - yy - zz;
+    dest[1][1] = 1.0f - xx - zz;
+    dest[2][2] = 1.0f - xx - yy;
 
-  dest[0][1] = xy + wz;
-  dest[1][2] = yz + wx;
-  dest[2][0] = xz + wy;
+    dest[0][1] = xy + wz;
+    dest[1][2] = yz + wx;
+    dest[2][0] = xz + wy;
 
-  dest[1][0] = xy - wz;
-  dest[2][1] = yz - wx;
-  dest[0][2] = xz - wy;
+    dest[1][0] = xy - wz;
+    dest[2][1] = yz - wx;
+    dest[0][2] = xz - wy;
 }
 
 /*!
@@ -614,34 +634,40 @@ glm_quat_mat3(versor q, mat3 dest) {
 CGLM_INLINE
 void
 glm_quat_mat3t(versor q, mat3 dest) {
-  float w, x, y, z,
-        xx, yy, zz,
-        xy, yz, xz,
-        wx, wy, wz, norm, s;
+    float w, x, y, z,
+            xx, yy, zz,
+            xy, yz, xz,
+            wx, wy, wz, norm, s;
 
-  norm = glm_quat_norm(q);
-  s    = norm > 0.0f ? 2.0f / norm : 0.0f;
+    norm = glm_quat_norm(q);
+    s = norm > 0.0f ? 2.0f / norm : 0.0f;
 
-  x = q[0];
-  y = q[1];
-  z = q[2];
-  w = q[3];
+    x = q[0];
+    y = q[1];
+    z = q[2];
+    w = q[3];
 
-  xx = s * x * x;   xy = s * x * y;   wx = s * w * x;
-  yy = s * y * y;   yz = s * y * z;   wy = s * w * y;
-  zz = s * z * z;   xz = s * x * z;   wz = s * w * z;
+    xx = s * x * x;
+    xy = s * x * y;
+    wx = s * w * x;
+    yy = s * y * y;
+    yz = s * y * z;
+    wy = s * w * y;
+    zz = s * z * z;
+    xz = s * x * z;
+    wz = s * w * z;
 
-  dest[0][0] = 1.0f - yy - zz;
-  dest[1][1] = 1.0f - xx - zz;
-  dest[2][2] = 1.0f - xx - yy;
+    dest[0][0] = 1.0f - yy - zz;
+    dest[1][1] = 1.0f - xx - zz;
+    dest[2][2] = 1.0f - xx - yy;
 
-  dest[1][0] = xy + wz;
-  dest[2][1] = yz + wx;
-  dest[0][2] = xz + wy;
+    dest[1][0] = xy + wz;
+    dest[2][1] = yz + wx;
+    dest[0][2] = xz + wy;
 
-  dest[0][1] = xy - wz;
-  dest[1][2] = yz - wx;
-  dest[2][0] = xz - wy;
+    dest[0][1] = xy - wz;
+    dest[1][2] = yz - wx;
+    dest[2][0] = xz - wy;
 }
 
 /*!
@@ -656,7 +682,7 @@ glm_quat_mat3t(versor q, mat3 dest) {
 CGLM_INLINE
 void
 glm_quat_lerp(versor from, versor to, float t, versor dest) {
-  glm_vec4_lerp(from, to, t, dest);
+    glm_vec4_lerp(from, to, t, dest);
 }
 
 /*!
@@ -671,7 +697,7 @@ glm_quat_lerp(versor from, versor to, float t, versor dest) {
 CGLM_INLINE
 void
 glm_quat_lerpc(versor from, versor to, float t, versor dest) {
-  glm_vec4_lerpc(from, to, t, dest);
+    glm_vec4_lerpc(from, to, t, dest);
 }
 
 /*!
@@ -687,14 +713,14 @@ glm_quat_lerpc(versor from, versor to, float t, versor dest) {
 CGLM_INLINE
 void
 glm_quat_nlerp(versor from, versor to, float t, versor dest) {
-  versor target;
-  float  dot;
-  
-  dot = glm_vec4_dot(from, to);
-  
-  glm_vec4_scale(to, (dot >= 0) ? 1.0f : -1.0f, target);
-  glm_quat_lerp(from, target, t, dest);
-  glm_quat_normalize(dest);
+    versor target;
+    float dot;
+
+    dot = glm_vec4_dot(from, to);
+
+    glm_vec4_scale(to, (dot >= 0) ? 1.0f : -1.0f, target);
+    glm_quat_lerp(from, target, t, dest);
+    glm_quat_normalize(dest);
 }
 
 /*!
@@ -709,37 +735,37 @@ glm_quat_nlerp(versor from, versor to, float t, versor dest) {
 CGLM_INLINE
 void
 glm_quat_slerp(versor from, versor to, float t, versor dest) {
-  CGLM_ALIGN(16) vec4 q1, q2;
-  float cosTheta, sinTheta, angle;
+    CGLM_ALIGN(16) vec4 q1, q2;
+    float cosTheta, sinTheta, angle;
 
-  cosTheta = glm_quat_dot(from, to);
-  glm_quat_copy(from, q1);
+    cosTheta = glm_quat_dot(from, to);
+    glm_quat_copy(from, q1);
 
-  if (fabsf(cosTheta) >= 1.0f) {
-    glm_quat_copy(q1, dest);
-    return;
-  }
+    if (fabsf(cosTheta) >= 1.0f) {
+        glm_quat_copy(q1, dest);
+        return;
+    }
 
-  if (cosTheta < 0.0f) {
-    glm_vec4_negate(q1);
-    cosTheta = -cosTheta;
-  }
+    if (cosTheta < 0.0f) {
+        glm_vec4_negate(q1);
+        cosTheta = -cosTheta;
+    }
 
-  sinTheta = sqrtf(1.0f - cosTheta * cosTheta);
+    sinTheta = sqrtf(1.0f - cosTheta * cosTheta);
 
-  /* LERP to avoid zero division */
-  if (fabsf(sinTheta) < 0.001f) {
-    glm_quat_lerp(from, to, t, dest);
-    return;
-  }
+    /* LERP to avoid zero division */
+    if (fabsf(sinTheta) < 0.001f) {
+        glm_quat_lerp(from, to, t, dest);
+        return;
+    }
 
-  /* SLERP */
-  angle = acosf(cosTheta);
-  glm_vec4_scale(q1, sinf((1.0f - t) * angle), q1);
-  glm_vec4_scale(to, sinf(t * angle), q2);
+    /* SLERP */
+    angle = acosf(cosTheta);
+    glm_vec4_scale(q1, sinf((1.0f - t) * angle), q1);
+    glm_vec4_scale(to, sinf(t * angle), q2);
 
-  glm_vec4_add(q1, q2, q1);
-  glm_vec4_scale(q1, 1.0f / sinTheta, dest);
+    glm_vec4_add(q1, q2, q1);
+    glm_vec4_scale(q1, 1.0f / sinTheta, dest);
 }
 
 /*!
@@ -752,12 +778,12 @@ glm_quat_slerp(versor from, versor to, float t, versor dest) {
 CGLM_INLINE
 void
 glm_quat_look(vec3 eye, versor ori, mat4 dest) {
-  /* orientation */
-  glm_quat_mat4t(ori, dest);
+    /* orientation */
+    glm_quat_mat4t(ori, dest);
 
-  /* translate */
-  glm_mat4_mulv3(dest, eye, 1.0f, dest[3]);
-  glm_vec3_negate(dest[3]);
+    /* translate */
+    glm_mat4_mulv3(dest, eye, 1.0f, dest[3]);
+    glm_vec3_negate(dest[3]);
 }
 
 /*!
@@ -770,17 +796,17 @@ glm_quat_look(vec3 eye, versor ori, mat4 dest) {
 CGLM_INLINE
 void
 glm_quat_for(vec3 dir, vec3 up, versor dest) {
-  CGLM_ALIGN_MAT mat3 m;
+    CGLM_ALIGN_MAT mat3 m;
 
-  glm_vec3_normalize_to(dir, m[2]); 
+    glm_vec3_normalize_to(dir, m[2]);
 
-  /* No need to negate in LH, but we use RH here */
-  glm_vec3_negate(m[2]);
-  
-  glm_vec3_crossn(up, m[2], m[0]);
-  glm_vec3_cross(m[2], m[0], m[1]);
+    /* No need to negate in LH, but we use RH here */
+    glm_vec3_negate(m[2]);
 
-  glm_mat3_quat(m, dest);
+    glm_vec3_crossn(up, m[2], m[0]);
+    glm_vec3_cross(m[2], m[0], m[1]);
+
+    glm_mat3_quat(m, dest);
 }
 
 /*!
@@ -795,9 +821,9 @@ glm_quat_for(vec3 dir, vec3 up, versor dest) {
 CGLM_INLINE
 void
 glm_quat_forp(vec3 from, vec3 to, vec3 up, versor dest) {
-  CGLM_ALIGN(8) vec3 dir;
-  glm_vec3_sub(to, from, dir);
-  glm_quat_for(dir, up, dest);
+    CGLM_ALIGN(8) vec3 dir;
+    glm_vec3_sub(to, from, dir);
+    glm_quat_for(dir, up, dest);
 }
 
 /*!
@@ -810,22 +836,22 @@ glm_quat_forp(vec3 from, vec3 to, vec3 up, versor dest) {
 CGLM_INLINE
 void
 glm_quat_rotatev(versor q, vec3 v, vec3 dest) {
-  CGLM_ALIGN(16) versor p;
-  CGLM_ALIGN(8)  vec3   u, v1, v2;
-  float s;
+    CGLM_ALIGN(16) versor p;
+    CGLM_ALIGN(8)  vec3 u, v1, v2;
+    float s;
 
-  glm_quat_normalize_to(q, p);
-  glm_quat_imag(p, u);
-  s = glm_quat_real(p);
+    glm_quat_normalize_to(q, p);
+    glm_quat_imag(p, u);
+    s = glm_quat_real(p);
 
-  glm_vec3_scale(u, 2.0f * glm_vec3_dot(u, v), v1);
-  glm_vec3_scale(v, s * s - glm_vec3_dot(u, u), v2);
-  glm_vec3_add(v1, v2, v1);
+    glm_vec3_scale(u, 2.0f * glm_vec3_dot(u, v), v1);
+    glm_vec3_scale(v, s * s - glm_vec3_dot(u, u), v2);
+    glm_vec3_add(v1, v2, v1);
 
-  glm_vec3_cross(u, v, v2);
-  glm_vec3_scale(v2, 2.0f * s, v2);
+    glm_vec3_cross(u, v, v2);
+    glm_vec3_scale(v2, 2.0f * s, v2);
 
-  glm_vec3_add(v1, v2, dest);
+    glm_vec3_add(v1, v2, dest);
 }
 
 /*!
@@ -838,9 +864,9 @@ glm_quat_rotatev(versor q, vec3 v, vec3 dest) {
 CGLM_INLINE
 void
 glm_quat_rotate(mat4 m, versor q, mat4 dest) {
-  CGLM_ALIGN_MAT mat4 rot;
-  glm_quat_mat4(q, rot);
-  glm_mul_rot(m, rot, dest);
+    CGLM_ALIGN_MAT mat4 rot;
+    glm_quat_mat4(q, rot);
+    glm_mul_rot(m, rot, dest);
 }
 
 /*!
@@ -853,13 +879,13 @@ glm_quat_rotate(mat4 m, versor q, mat4 dest) {
 CGLM_INLINE
 void
 glm_quat_rotate_at(mat4 m, versor q, vec3 pivot) {
-  CGLM_ALIGN(8) vec3 pivotInv;
+    CGLM_ALIGN(8) vec3 pivotInv;
 
-  glm_vec3_negate_to(pivot, pivotInv);
+    glm_vec3_negate_to(pivot, pivotInv);
 
-  glm_translate(m, pivot);
-  glm_quat_rotate(m, q, m);
-  glm_translate(m, pivotInv);
+    glm_translate(m, pivot);
+    glm_quat_rotate(m, q, m);
+    glm_translate(m, pivotInv);
 }
 
 /*!
@@ -877,13 +903,13 @@ glm_quat_rotate_at(mat4 m, versor q, vec3 pivot) {
 CGLM_INLINE
 void
 glm_quat_rotate_atm(mat4 m, versor q, vec3 pivot) {
-  CGLM_ALIGN(8) vec3 pivotInv;
+    CGLM_ALIGN(8) vec3 pivotInv;
 
-  glm_vec3_negate_to(pivot, pivotInv);
+    glm_vec3_negate_to(pivot, pivotInv);
 
-  glm_translate_make(m, pivot);
-  glm_quat_rotate(m, q, m);
-  glm_translate(m, pivotInv);
+    glm_translate_make(m, pivot);
+    glm_quat_rotate(m, q, m);
+    glm_translate(m, pivotInv);
 }
 
 /*!
@@ -894,9 +920,11 @@ glm_quat_rotate_atm(mat4 m, versor q, vec3 pivot) {
  */
 CGLM_INLINE
 void
-glm_quat_make(float * __restrict src, versor dest) {
-  dest[0] = src[0]; dest[1] = src[1];
-  dest[2] = src[2]; dest[3] = src[3];
+glm_quat_make(float *__restrict src, versor dest) {
+    dest[0] = src[0];
+    dest[1] = src[1];
+    dest[2] = src[2];
+    dest[3] = src[3];
 }
 
 #endif /* cglm_quat_h */

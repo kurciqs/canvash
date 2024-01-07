@@ -74,9 +74,9 @@
 CGLM_INLINE
 vec2s
 glms_vec2(vec3s v3) {
-  vec2s r;
-  glm_vec2(v3.raw, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2(v3.raw, r.raw);
+    return r;
 }
 
 /*!
@@ -89,11 +89,11 @@ glms_vec2(vec3s v3) {
 CGLM_INLINE
 void
 glms_vec2_(pack)(vec2s dst[], vec2 src[], size_t len) {
-  size_t i;
+    size_t i;
 
-  for (i = 0; i < len; i++) {
-    glm_vec2_copy(src[i], dst[i].raw);
-  }
+    for (i = 0; i < len; i++) {
+        glm_vec2_copy(src[i], dst[i].raw);
+    }
 }
 
 /*!
@@ -106,11 +106,11 @@ glms_vec2_(pack)(vec2s dst[], vec2 src[], size_t len) {
 CGLM_INLINE
 void
 glms_vec2_(unpack)(vec2 dst[], vec2s src[], size_t len) {
-  size_t i;
+    size_t i;
 
-  for (i = 0; i < len; i++) {
-    glm_vec2_copy(src[i].raw, dst[i]);
-  }
+    for (i = 0; i < len; i++) {
+        glm_vec2_copy(src[i].raw, dst[i]);
+    }
 }
 
 /*!
@@ -121,9 +121,9 @@ glms_vec2_(unpack)(vec2 dst[], vec2s src[], size_t len) {
 CGLM_INLINE
 vec2s
 glms_vec2_(zero)(void) {
-  vec2s r;
-  glm_vec2_zero(r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_zero(r.raw);
+    return r;
 }
 
 /*!
@@ -134,9 +134,9 @@ glms_vec2_(zero)(void) {
 CGLM_INLINE
 vec2s
 glms_vec2_(one)(void) {
-  vec2s r;
-  glm_vec2_one(r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_one(r.raw);
+    return r;
 }
 
 /*!
@@ -150,7 +150,7 @@ glms_vec2_(one)(void) {
 CGLM_INLINE
 float
 glms_vec2_(dot)(vec2s a, vec2s b) {
-  return glm_vec2_dot(a.raw, b.raw);
+    return glm_vec2_dot(a.raw, b.raw);
 }
 
 /*!
@@ -166,7 +166,7 @@ glms_vec2_(dot)(vec2s a, vec2s b) {
 CGLM_INLINE
 float
 glms_vec2_(cross)(vec2s a, vec2s b) {
-  return glm_vec2_cross(a.raw, b.raw);
+    return glm_vec2_cross(a.raw, b.raw);
 }
 
 /*!
@@ -183,7 +183,7 @@ glms_vec2_(cross)(vec2s a, vec2s b) {
 CGLM_INLINE
 float
 glms_vec2_(norm2)(vec2s v) {
-  return glm_vec2_norm2(v.raw);
+    return glm_vec2_norm2(v.raw);
 }
 
 /*!
@@ -196,7 +196,7 @@ glms_vec2_(norm2)(vec2s v) {
 CGLM_INLINE
 float
 glms_vec2_(norm)(vec2s v) {
-  return glm_vec2_norm(v.raw);
+    return glm_vec2_norm(v.raw);
 }
 
 /*!
@@ -209,9 +209,9 @@ glms_vec2_(norm)(vec2s v) {
 CGLM_INLINE
 vec2s
 glms_vec2_(add)(vec2s a, vec2s b) {
-  vec2s r;
-  glm_vec2_add(a.raw, b.raw, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_add(a.raw, b.raw, r.raw);
+    return r;
 }
 
 /*!
@@ -224,9 +224,9 @@ glms_vec2_(add)(vec2s a, vec2s b) {
 CGLM_INLINE
 vec2s
 glms_vec2_(adds)(vec2s a, float s) {
-  vec2s r;
-  glm_vec2_adds(a.raw, s, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_adds(a.raw, s, r.raw);
+    return r;
 }
 
 /*!
@@ -239,9 +239,9 @@ glms_vec2_(adds)(vec2s a, float s) {
 CGLM_INLINE
 vec2s
 glms_vec2_(sub)(vec2s a, vec2s b) {
-  vec2s r;
-  glm_vec2_sub(a.raw, b.raw, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_sub(a.raw, b.raw, r.raw);
+    return r;
 }
 
 /*!
@@ -254,9 +254,9 @@ glms_vec2_(sub)(vec2s a, vec2s b) {
 CGLM_INLINE
 vec2s
 glms_vec2_(subs)(vec2s a, float s) {
-  vec2s r;
-  glm_vec2_subs(a.raw, s, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_subs(a.raw, s, r.raw);
+    return r;
 }
 
 /*!
@@ -269,9 +269,9 @@ glms_vec2_(subs)(vec2s a, float s) {
 CGLM_INLINE
 vec2s
 glms_vec2_(mul)(vec2s a, vec2s b) {
-  vec2s r;
-  glm_vec2_mul(a.raw, b.raw, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_mul(a.raw, b.raw, r.raw);
+    return r;
 }
 
 /*!
@@ -284,9 +284,9 @@ glms_vec2_(mul)(vec2s a, vec2s b) {
 CGLM_INLINE
 vec2s
 glms_vec2_(scale)(vec2s v, float s) {
-  vec2s r;
-  glm_vec2_scale(v.raw, s, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_scale(v.raw, s, r.raw);
+    return r;
 }
 
 /*!
@@ -299,9 +299,9 @@ glms_vec2_(scale)(vec2s v, float s) {
 CGLM_INLINE
 vec2s
 glms_vec2_(scale_as)(vec2s v, float s) {
-  vec2s r;
-  glm_vec2_scale_as(v.raw, s, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_scale_as(v.raw, s, r.raw);
+    return r;
 }
 
 /*!
@@ -314,9 +314,9 @@ glms_vec2_(scale_as)(vec2s v, float s) {
 CGLM_INLINE
 vec2s
 glms_vec2_(div)(vec2s a, vec2s b) {
-  vec2s r;
-  glm_vec2_div(a.raw, b.raw, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_div(a.raw, b.raw, r.raw);
+    return r;
 }
 
 /*!
@@ -329,9 +329,9 @@ glms_vec2_(div)(vec2s a, vec2s b) {
 CGLM_INLINE
 vec2s
 glms_vec2_(divs)(vec2s a, float s) {
-  vec2s r;
-  glm_vec2_divs(a.raw, s, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_divs(a.raw, s, r.raw);
+    return r;
 }
 
 /*!
@@ -346,8 +346,8 @@ glms_vec2_(divs)(vec2s a, float s) {
 CGLM_INLINE
 vec2s
 glms_vec2_(addadd)(vec2s a, vec2s b, vec2s dest) {
-  glm_vec2_addadd(a.raw, b.raw, dest.raw);
-  return dest;
+    glm_vec2_addadd(a.raw, b.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -362,8 +362,8 @@ glms_vec2_(addadd)(vec2s a, vec2s b, vec2s dest) {
 CGLM_INLINE
 vec2s
 glms_vec2_(subadd)(vec2s a, vec2s b, vec2s dest) {
-  glm_vec2_subadd(a.raw, b.raw, dest.raw);
-  return dest;
+    glm_vec2_subadd(a.raw, b.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -378,8 +378,8 @@ glms_vec2_(subadd)(vec2s a, vec2s b, vec2s dest) {
 CGLM_INLINE
 vec2s
 glms_vec2_(muladd)(vec2s a, vec2s b, vec2s dest) {
-  glm_vec2_muladd(a.raw, b.raw, dest.raw);
-  return dest;
+    glm_vec2_muladd(a.raw, b.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -394,8 +394,8 @@ glms_vec2_(muladd)(vec2s a, vec2s b, vec2s dest) {
 CGLM_INLINE
 vec2s
 glms_vec2_(muladds)(vec2s a, float s, vec2s dest) {
-  glm_vec2_muladds(a.raw, s, dest.raw);
-  return dest;
+    glm_vec2_muladds(a.raw, s, dest.raw);
+    return dest;
 }
 
 /*!
@@ -410,8 +410,8 @@ glms_vec2_(muladds)(vec2s a, float s, vec2s dest) {
 CGLM_INLINE
 vec2s
 glms_vec2_(maxadd)(vec2s a, vec2s b, vec2s dest) {
-  glm_vec2_maxadd(a.raw, b.raw, dest.raw);
-  return dest;
+    glm_vec2_maxadd(a.raw, b.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -426,8 +426,8 @@ glms_vec2_(maxadd)(vec2s a, vec2s b, vec2s dest) {
 CGLM_INLINE
 vec2s
 glms_vec2_(minadd)(vec2s a, vec2s b, vec2s dest) {
-  glm_vec2_minadd(a.raw, b.raw, dest.raw);
-  return dest;
+    glm_vec2_minadd(a.raw, b.raw, dest.raw);
+    return dest;
 }
 
 /*!
@@ -439,8 +439,8 @@ glms_vec2_(minadd)(vec2s a, vec2s b, vec2s dest) {
 CGLM_INLINE
 vec2s
 glms_vec2_(negate)(vec2s v) {
-  glm_vec2_negate(v.raw);
-  return v;
+    glm_vec2_negate(v.raw);
+    return v;
 }
 
 /*!
@@ -452,8 +452,8 @@ glms_vec2_(negate)(vec2s v) {
 CGLM_INLINE
 vec2s
 glms_vec2_(normalize)(vec2s v) {
-  glm_vec2_normalize(v.raw);
-  return v;
+    glm_vec2_normalize(v.raw);
+    return v;
 }
 
 /*!
@@ -466,9 +466,9 @@ glms_vec2_(normalize)(vec2s v) {
 CGLM_INLINE
 vec2s
 glms_vec2_(rotate)(vec2s v, float angle) {
-  vec2s r;
-  glm_vec2_rotate(v.raw, angle, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_rotate(v.raw, angle, r.raw);
+    return r;
 }
 
 /**
@@ -481,9 +481,9 @@ glms_vec2_(rotate)(vec2s v, float angle) {
 CGLM_INLINE
 vec2s
 glms_vec2_(center)(vec2s a, vec2s b) {
-  vec2s r;
-  glm_vec2_center(a.raw, b.raw, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_center(a.raw, b.raw, r.raw);
+    return r;
 }
 
 /**
@@ -496,7 +496,7 @@ glms_vec2_(center)(vec2s a, vec2s b) {
 CGLM_INLINE
 float
 glms_vec2_(distance)(vec2s a, vec2s b) {
-  return glm_vec2_distance(a.raw, b.raw);
+    return glm_vec2_distance(a.raw, b.raw);
 }
 
 /**
@@ -509,7 +509,7 @@ glms_vec2_(distance)(vec2s a, vec2s b) {
 CGLM_INLINE
 float
 glms_vec2_(distance2)(vec2s a, vec2s b) {
-  return glm_vec2_distance2(a.raw, b.raw);
+    return glm_vec2_distance2(a.raw, b.raw);
 }
 
 /*!
@@ -522,9 +522,9 @@ glms_vec2_(distance2)(vec2s a, vec2s b) {
 CGLM_INLINE
 vec2s
 glms_vec2_(maxv)(vec2s a, vec2s b) {
-  vec2s r;
-  glm_vec2_maxv(a.raw, b.raw, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_maxv(a.raw, b.raw, r.raw);
+    return r;
 }
 
 /*!
@@ -537,9 +537,9 @@ glms_vec2_(maxv)(vec2s a, vec2s b) {
 CGLM_INLINE
 vec2s
 glms_vec2_(minv)(vec2s a, vec2s b) {
-  vec2s r;
-  glm_vec2_minv(a.raw, b.raw, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_minv(a.raw, b.raw, r.raw);
+    return r;
 }
 
 /*!
@@ -553,8 +553,8 @@ glms_vec2_(minv)(vec2s a, vec2s b) {
 CGLM_INLINE
 vec2s
 glms_vec2_(clamp)(vec2s v, float minVal, float maxVal) {
-  glm_vec2_clamp(v.raw, minVal, maxVal);
-  return v;
+    glm_vec2_clamp(v.raw, minVal, maxVal);
+    return v;
 }
 
 /*!
@@ -570,9 +570,9 @@ glms_vec2_(clamp)(vec2s v, float minVal, float maxVal) {
 CGLM_INLINE
 vec2s
 glms_vec2_(lerp)(vec2s from, vec2s to, float t) {
-  vec2s r;
-  glm_vec2_lerp(from.raw, to.raw, t, r.raw);
-  return r;
+    vec2s r;
+    glm_vec2_lerp(from.raw, to.raw, t, r.raw);
+    return r;
 }
 
 /*!
@@ -583,10 +583,10 @@ glms_vec2_(lerp)(vec2s from, vec2s to, float t) {
  */
 CGLM_INLINE
 vec2s
-glms_vec2_(make)(float * __restrict src) {
-  vec2s dest;
-  glm_vec2_make(src, dest.raw);
-  return dest;
+glms_vec2_(make)(float *__restrict src) {
+    vec2s dest;
+    glm_vec2_make(src, dest.raw);
+    return dest;
 }
 
 #endif /* cglms_vec2s_h */

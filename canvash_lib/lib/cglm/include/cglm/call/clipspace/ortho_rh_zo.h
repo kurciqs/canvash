@@ -15,10 +15,10 @@ extern "C" {
 
 CGLM_EXPORT
 void
-glmc_ortho_rh_zo(float left,    float right,
-                 float bottom,  float top,
-                 float nearZ,   float farZ,
-                 mat4  dest);
+glmc_ortho_rh_zo(float left, float right,
+                 float bottom, float top,
+                 float nearZ, float farZ,
+                 mat4 dest);
 
 CGLM_EXPORT
 void

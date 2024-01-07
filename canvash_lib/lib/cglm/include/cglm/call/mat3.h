@@ -30,7 +30,7 @@ glmc_mat3_zero(mat3 mat);
 
 CGLM_EXPORT
 void
-glmc_mat3_identity_array(mat3 * __restrict mat, size_t count);
+glmc_mat3_identity_array(mat3 *__restrict mat, size_t count);
 
 CGLM_EXPORT
 void
@@ -82,7 +82,7 @@ glmc_mat3_rmc(vec3 r, mat3 m, vec3 c);
 
 CGLM_EXPORT
 void
-glmc_mat3_make(float * __restrict src, mat3 dest);
+glmc_mat3_make(float *__restrict src, mat3 dest);
 
 #ifdef __cplusplus
 }

@@ -7,7 +7,9 @@
 
 #ifndef cglm_simd_arm_h
 #define cglm_simd_arm_h
+
 #include "intrin.h"
+
 #ifdef CGLM_SIMD_ARM
 
 #if defined(_M_ARM64) || defined(_M_HYBRID_X86_ARM64) || defined(_M_ARM64EC) || defined(__aarch64__)

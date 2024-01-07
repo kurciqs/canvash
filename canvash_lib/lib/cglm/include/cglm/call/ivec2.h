@@ -15,7 +15,7 @@ extern "C" {
 
 CGLM_EXPORT
 void
-glmc_ivec2(int * __restrict v, ivec2 dest);
+glmc_ivec2(int *__restrict v, ivec2 dest);
 
 CGLM_EXPORT
 void

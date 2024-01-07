@@ -7,7 +7,9 @@
 
 #ifndef cglm_simd_wasm_h
 #define cglm_simd_wasm_h
+
 #include "intrin.h"
+
 #ifdef CGLM_SIMD_WASM
 #include <wasm_simd128.h>
 

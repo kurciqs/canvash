@@ -31,7 +31,7 @@ glmc_mat4_identity(mat4 mat);
 
 CGLM_EXPORT
 void
-glmc_mat4_identity_array(mat4 * __restrict mat, size_t count);
+glmc_mat4_identity_array(mat4 *__restrict mat, size_t count);
 
 CGLM_EXPORT
 void
@@ -55,7 +55,7 @@ glmc_mat4_mul(mat4 m1, mat4 m2, mat4 dest);
 
 CGLM_EXPORT
 void
-glmc_mat4_mulN(mat4 * __restrict matrices[], uint32_t len, mat4 dest);
+glmc_mat4_mulN(mat4 *__restrict matrices[], uint32_t len, mat4 dest);
 
 CGLM_EXPORT
 void
@@ -123,7 +123,7 @@ glmc_mat4_rmc(vec4 r, mat4 m, vec4 c);
 
 CGLM_EXPORT
 void
-glmc_mat4_make(float * __restrict src, mat4 dest);
+glmc_mat4_make(float *__restrict src, mat4 dest);
 
 #ifdef __cplusplus
 }

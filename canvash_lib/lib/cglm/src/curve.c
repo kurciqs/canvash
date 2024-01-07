@@ -11,5 +11,5 @@
 CGLM_EXPORT
 float
 glmc_smc(float s, mat4 m, vec4 c) {
-  return glm_smc(s, m, c);
+    return glm_smc(s, m, c);
 }

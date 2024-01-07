@@ -22,7 +22,7 @@ void
 glmc_ivec4_copy(ivec4 a, ivec4 dest);
 
 CGLM_EXPORT
-void 
+void
 glmc_ivec4_zero(ivec4 v);
 
 CGLM_EXPORT

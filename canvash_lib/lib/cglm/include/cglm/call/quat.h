@@ -19,7 +19,7 @@ glmc_quat_identity(versor q);
 
 CGLM_EXPORT
 void
-glmc_quat_identity_array(versor * __restrict q, size_t count);
+glmc_quat_identity_array(versor *__restrict q, size_t count);
 
 CGLM_EXPORT
 void
@@ -163,7 +163,7 @@ glmc_quat_rotate_atm(mat4 m, versor q, vec3 pivot);
 
 CGLM_EXPORT
 void
-glmc_quat_make(float * __restrict src, versor dest);
+glmc_quat_make(float *__restrict src, versor dest);
 
 #ifdef __cplusplus
 }

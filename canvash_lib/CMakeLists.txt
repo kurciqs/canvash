@@ -28,4 +28,4 @@ target_link_libraries(${PROJECT_NAME} cglm)
 # Compiler business for it to always work
 IF (WIN32)
     target_link_libraries(${PROJECT_NAME} opengl32 gdi32)
-ENDIF()
+ENDIF ()

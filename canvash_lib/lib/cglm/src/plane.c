@@ -11,5 +11,5 @@
 CGLM_EXPORT
 void
 glmc_plane_normalize(vec4 plane) {
-  glm_plane_normalize(plane);
+    glm_plane_normalize(plane);
 }
