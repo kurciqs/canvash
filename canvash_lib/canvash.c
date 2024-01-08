@@ -34,10 +34,9 @@ static mat4 s_proj;
 // TODO fill without an outline_color is not getting drawn
 // TODO safeguards for if not initialized
 static int s_num_draw_rectangles = 0;
-static float *s_rectangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col (if w component is zero it is no_fill) */
+static float *s_rectangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
 static const size_t s_rectangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
 static const size_t s_rectangle_instance_data_num_floats = 4 * 4 + 4;
-//static size_t s_rectangle_instance_data_size = 3 * sizeof(float);
 static float s_rectangle_object_data_vertices[8] = {
         -0.5f, -0.5f,
         0.5f, -0.5f,
@@ -46,18 +45,28 @@ static float s_rectangle_object_data_vertices[8] = {
 };
 static unsigned int s_rectangle_object_data_indices[6] = {0, 1, 2, 0, 2, 3};
 static Shader s_rectangle_shader;
+static GLuint s_rectangle_vbo;
+static GLuint s_rectangle_vao;
+static GLuint s_rectangle_ebo;
+static GLuint s_rectangle_instance_data_vbo;
 
 // NOTE ellipse is also a circle
-static int s_num_draw_ellipses;
-static float *s_ellipse_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col (if w component is zero it is no_fill), vec4 outline_color (if w component is zero it is no_outline), vec2 radius*/
-static float s_ellipse_object_data_vertices[12] = {
-        -0.5f, -0.5f, CANVASH_TWODIMENSIONAL_Z_POS,
-        0.5f, -0.5f, CANVASH_TWODIMENSIONAL_Z_POS,
-        0.5f, 0.5f, CANVASH_TWODIMENSIONAL_Z_POS,
-        -0.5f, 0.5f, CANVASH_TWODIMENSIONAL_Z_POS
+static int s_num_draw_ellipses = 0;
+static float *s_ellipse_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
+static const size_t s_ellipse_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
+static const size_t s_ellipse_instance_data_num_floats = 4 * 4 + 4;
+static float s_ellipse_object_data_vertices[8] = {
+        -0.5f, -0.5f,
+        0.5f, -0.5f,
+        0.5f, 0.5f,
+        -0.5f, 0.5f
 };
-static int s_ellipse_object_data_indices[6] = {0, 1, 2, 0, 2, 3};
+static unsigned int s_ellipse_object_data_indices[6] = {0, 1, 2, 0, 2, 3};
 static Shader s_ellipse_shader;
+static GLuint s_ellipse_vbo;
+static GLuint s_ellipse_vao;
+static GLuint s_ellipse_ebo;
+static GLuint s_ellipse_instance_data_vbo;
 
 // TODO change the instance data config
 static int s_num_draw_triangles;
@@ -135,7 +144,7 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwSetErrorCallback(glfw_error_callback);
 
     s_window = glfwCreateWindow(app_width, app_height, app_name, NULL, NULL);
@@ -155,6 +164,7 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
     glViewport(0, 0, app_width, app_height);
     s_window_size[0] = (float) app_width;
     s_window_size[1] = (float) app_height;
+    glEnable(GL_DEPTH_TEST);
     glfwSetFramebufferSizeCallback(s_window, glfw_framebuffer_size_callback);
     if (glDebugMessageCallback) {
         glEnable(GL_DEBUG_OUTPUT);
@@ -185,7 +195,17 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
     s_key_callback = NULL;
     s_mouse_callback = NULL;
 
-    s_rectangle_shader = create_shader("res/shader/vert.glsl", "res/shader/frag.glsl");
+    s_rectangle_shader = create_shader("res/shader/rect_vert.glsl", "res/shader/rect_frag.glsl");
+    glGenVertexArrays(1, &s_rectangle_vao);
+    glGenBuffers(1, &s_rectangle_vbo);
+    glGenBuffers(1, &s_rectangle_ebo);
+    glGenBuffers(1, &s_rectangle_instance_data_vbo);
+
+    s_ellipse_shader = create_shader("res/shader/ell_vert.glsl", "res/shader/ell_frag.glsl");
+    glGenVertexArrays(1, &s_ellipse_vao);
+    glGenBuffers(1, &s_ellipse_vbo);
+    glGenBuffers(1, &s_ellipse_ebo);
+    glGenBuffers(1, &s_ellipse_instance_data_vbo);
 
     // NOTE set all of the styling data to basic (very gray and boring)
     glm_mat4_identity(s_current_transform);
@@ -205,13 +225,12 @@ int canvash_running() {
 }
 
 void canvash_clear_screen() {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(s_background[0], s_background[1], s_background[2], 1.0f);
 }
 
 void canvash_render() {
     // TODO
-
     glm_ortho(-s_window_size[0] / 2.0f, s_window_size[0] / 2.0f, -s_window_size[1] / 2.0f, s_window_size[1] / 2.0f, -1.0f, 1.0f, s_proj);
 
     if (s_rectangle_instance_data && s_num_draw_rectangles) {
@@ -220,77 +239,148 @@ void canvash_render() {
 
         int ind = 0;
         for (int i = 0; i < 4; i++) {
-            rectangle_object_data_vertices_new[i * 3 + 0] = s_rectangle_object_data_vertices[ind++] * 400.0f;
-            rectangle_object_data_vertices_new[i * 3 + 1] = s_rectangle_object_data_vertices[ind++] * 300.0f;
+            rectangle_object_data_vertices_new[i * 3 + 0] = s_rectangle_object_data_vertices[ind++];
+            rectangle_object_data_vertices_new[i * 3 + 1] = s_rectangle_object_data_vertices[ind++];
             rectangle_object_data_vertices_new[i * 3 + 2] = 0;
         }
 
-        unsigned int vbo, ebo, vao, id_data_vbo;
-        glGenVertexArrays(1, &vao);
-        glGenBuffers(1, &vbo);
-        glGenBuffers(1, &ebo);
-        glGenBuffers(1, &id_data_vbo);
+        {
+            glBindVertexArray(s_rectangle_vao);
 
-        glBindVertexArray(vao);
+            glBindBuffer(GL_ARRAY_BUFFER, s_rectangle_vbo);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(rectangle_object_data_vertices_new), rectangle_object_data_vertices_new, GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(rectangle_object_data_vertices_new), rectangle_object_data_vertices_new, GL_STATIC_DRAW);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_rectangle_ebo);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(s_rectangle_object_data_indices), s_rectangle_object_data_indices, GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(s_rectangle_object_data_indices), s_rectangle_object_data_indices, GL_STATIC_DRAW);
+            // NOTE this gives the position of the base quad vertices
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *) 0);
+            glEnableVertexAttribArray(0);
 
-        // TODO align the vertex data also in the shader
-        // TODO projection and view matrices
+            // NOTE this is different for each quad/rect
+            glBindBuffer(GL_ARRAY_BUFFER, s_rectangle_instance_data_vbo);
+            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) s_rectangle_instance_data_size * s_num_draw_rectangles, s_rectangle_instance_data, GL_STATIC_DRAW);
 
-        // NOTE this gives the position of the base quad vertices
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *) 0);
-        glEnableVertexAttribArray(0);
+            // NOTE this is the model matrix
+            for (unsigned int i = 0; i < 4; i++) {
+                glVertexAttribPointer(1 + i, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_rectangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (sizeof(GLfloat) * i * 4));
+                glEnableVertexAttribArray(1 + i);
+                glVertexAttribDivisor(1 + i, 1);
+            }
 
-        // NOTE this is different for each quad/rect
-        glBindBuffer(GL_ARRAY_BUFFER, id_data_vbo);
-        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) s_rectangle_instance_data_size * s_num_draw_rectangles, s_rectangle_instance_data, GL_STATIC_DRAW);
+            // NOTE this is the color
+            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_rectangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(4 + 1);
+            glVertexAttribDivisor(4 + 1, 1); // This also advances once per instance
 
-        // TODO get the model matrix to the GPU correctly
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
 
-        // NOTE this is the model matrix
-        glVertexAttribPointer(1, 16, GL_FLOAT, GL_FALSE, (GLsizei) (s_rectangle_instance_data_num_floats * sizeof(GLfloat)), (void *) 0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribDivisor(1, 1); // This makes sure this attribute advances once per instance
+            activate_shader(s_rectangle_shader);
+            glBindVertexArray(s_rectangle_vao);
 
-        // NOTE this is the color
-        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_rectangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
-        glEnableVertexAttribArray(2);
-        glVertexAttribDivisor(2, 1); // This also advances once per instance
+            shader_upload_m4(s_rectangle_shader, "u_proj", s_proj);
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
+            // glDrawArraysInstanced(GL_TRIANGLES, 0, 4, numInstances);
+            glDrawElementsInstanced(GL_TRIANGLES, sizeof(s_rectangle_object_data_indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0, s_num_draw_rectangles);
 
-        glUseProgram(s_rectangle_shader);
-        glBindVertexArray(vao);
-
-        shader_upload_m4(s_rectangle_shader, "u_proj", s_proj);
-
-        // glDrawArraysInstanced(GL_TRIANGLES, 0, 4, numInstances);
-        glDrawElementsInstanced(GL_TRIANGLES, sizeof(s_rectangle_object_data_indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0, s_num_draw_rectangles);
-        glBindVertexArray(0);
-
-        glDeleteVertexArrays(1, &vao);
-        glDeleteBuffers(1, &vbo);
-        glDeleteBuffers(1, &id_data_vbo);
+            deactivate_shader();
+            glBindVertexArray(0);
+        }
 
         free((void *) s_rectangle_instance_data);
         s_rectangle_instance_data = NULL;
         s_num_draw_rectangles = 0;
     }
 
+    if (s_ellipse_instance_data && s_num_draw_ellipses) {
+
+        float ellipse_object_data_vertices_new[12];
+
+        int ind = 0;
+        for (int i = 0; i < 4; i++) {
+            ellipse_object_data_vertices_new[i * 3 + 0] = s_ellipse_object_data_vertices[ind++];
+            ellipse_object_data_vertices_new[i * 3 + 1] = s_ellipse_object_data_vertices[ind++];
+            ellipse_object_data_vertices_new[i * 3 + 2] = 0;
+        }
+
+        {
+            glBindVertexArray(s_ellipse_vao);
+
+            glBindBuffer(GL_ARRAY_BUFFER, s_ellipse_vbo);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(ellipse_object_data_vertices_new), ellipse_object_data_vertices_new, GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_ellipse_ebo);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(s_ellipse_object_data_indices), s_ellipse_object_data_indices, GL_STATIC_DRAW);
+
+            // NOTE this gives the position of the base quad vertices
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *)0);
+            glEnableVertexAttribArray(0);
+
+            // NOTE this is different for each ellipse
+            glBindBuffer(GL_ARRAY_BUFFER, s_ellipse_instance_data_vbo);
+            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)s_ellipse_instance_data_size * s_num_draw_ellipses, s_ellipse_instance_data, GL_STATIC_DRAW);
+
+            // NOTE this is the model matrix
+            for (unsigned int i = 0; i < 4; i++) {
+                glVertexAttribPointer(1 + i, 4, GL_FLOAT, GL_FALSE, (GLsizei)(s_ellipse_instance_data_num_floats * sizeof(GLfloat)), (void *)(sizeof(GLfloat) * i * 4));
+                glEnableVertexAttribArray(1 + i);
+                glVertexAttribDivisor(1 + i, 1);
+            }
+
+            // NOTE this is the color
+            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei)(s_ellipse_instance_data_num_floats * sizeof(GLfloat)), (void *)(16 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(4 + 1);
+            glVertexAttribDivisor(4 + 1, 1); // This also advances once per instance
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
+
+            activate_shader(s_ellipse_shader);
+            glBindVertexArray(s_ellipse_vao);
+
+            shader_upload_m4(s_ellipse_shader, "u_proj", s_proj);
+
+            // glDrawArraysInstanced(GL_TRIANGLES, 0, 4, numInstances);
+            glDrawElementsInstanced(GL_TRIANGLES, sizeof(s_ellipse_object_data_indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0, s_num_draw_ellipses);
+
+            deactivate_shader();
+            glBindVertexArray(0);
+        }
+
+        free((void *)s_ellipse_instance_data);
+        s_ellipse_instance_data = NULL;
+        s_num_draw_ellipses = 0;
+    }
+
+    // NOTE reset everything
+    glm_mat4_identity(s_current_transform);
+    glm_mat4_identity(s_proj);
+    glm_vec3_one(s_fill_color); // white
+    glm_vec3_zero(s_outline_color); // black
+    s_fill = true; // fill
+    s_outline_size = 0.1f; // narrow
+    s_outline = false; // outline
+
     glfwSwapBuffers(s_window);
     glfwPollEvents();
-
 }
 
 void canvash_terminate() {
     delete_shader(s_rectangle_shader);
+    glDeleteVertexArrays(1, &s_rectangle_vao);
+    glDeleteBuffers(1, &s_rectangle_vbo);
+    glDeleteBuffers(1, &s_rectangle_ebo);
+    glDeleteBuffers(1, &s_rectangle_instance_data_vbo);
+
+    delete_shader(s_ellipse_shader);
+    glDeleteVertexArrays(1, &s_ellipse_vao);
+    glDeleteBuffers(1, &s_ellipse_vbo);
+    glDeleteBuffers(1, &s_ellipse_ebo);
+    glDeleteBuffers(1, &s_ellipse_instance_data_vbo);
+
     free((void *) s_rectangle_instance_data);
+    free((void *) s_ellipse_instance_data);
 
     glfwDestroyWindow(s_window);
     glfwTerminate();
@@ -351,13 +441,13 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
         glm_vec2_add(p1, p2, center);
         glm_vec2_scale(center, 0.5f, center);
 
-//        glm_scale(transform, (vec3) {fabsf( p1[0] - p2[0]), fabsf( p1[1] - p2[1]), 1.0f }); // will scale by the width and height and since the initial size is unitary this will translate into pixels on the screen
-//        glm_translate(transform, (vec3) {center[0], center[1], 0.0f});
+        // TODO figure out the z-indexing by changing the z translation should work fine
+        glm_translate(transform, (vec3) {center[0], center[1], 0.01f});
+        glm_scale(transform, (vec3) {fabsf(p2[0] - p1[0]), fabsf(p2[1] - p1[1]), 1.0f}); // will scale by the width and height and since the initial size is unitary this will translate into pixels on the screen
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 s_rectangle_instance_data[(s_num_draw_rectangles - 1) * s_rectangle_instance_data_num_floats + i * 4 + j] = transform[i][j];
-//                printf("%d %d %f %d\n", i, j, transform[i][j], (s_num_draw_rectangles - 1) * s_rectangle_instance_data_num_floats + i * 4 + j);
             }
         }
 
@@ -367,10 +457,67 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
     }
 }
 
+void canvash_ellipse_2D(float *p, float a, float b) {
+    if (s_mode == threedimensional) {
+        fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while in threedimensional mode.\n");
+        return;
+    }
+
+    // TODO this will render the outline with the line renderer
+    if (s_outline) {
+        fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while in outline mode.\n");
+        return;
+    }
+
+    if (s_fill) {
+        // NOTE renders the fill mesh
+
+        // NOTE resize the current instance data to fit with the added ellipse
+        s_num_draw_ellipses++;
+        if (!s_ellipse_instance_data && !s_num_draw_ellipses) {
+            s_ellipse_instance_data = (float *) malloc(s_ellipse_instance_data_size * s_num_draw_ellipses);
+            if (s_ellipse_instance_data == NULL) {
+                fprintf(stderr, "[ERROR] failed to allocate any ellipse instance data.\n");
+                s_num_draw_ellipses--;
+                return;
+            }
+        } else {
+            float *new_ellipse_instance_data = (float *) realloc(s_ellipse_instance_data, s_ellipse_instance_data_size * s_num_draw_ellipses);
+            if (new_ellipse_instance_data == NULL) {
+                fprintf(stderr, "[ERROR] failed to reallocate new ellipse instance data.\n");
+                s_num_draw_ellipses--;
+                return;
+            } else {
+                s_ellipse_instance_data = new_ellipse_instance_data;
+            }
+        }
+
+        // NOTE add the instance data
+        // NOTE 16 floats for transform matrix + 4 floats for color
+
+        mat4 transform;
+        glm_mat4_copy(s_current_transform, transform);
+
+        vec2 center;
+        glm_vec2_copy(p, center);
+
+        glm_translate(transform, (vec3) {center[0], center[1], 0.0f});
+        glm_scale(transform, (vec3) {a, b, 1.0f}); // will scale by the r1 and r2 and since the initial size is unitary this will translate into pixels on the screen
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                s_ellipse_instance_data[(s_num_draw_ellipses - 1) * s_ellipse_instance_data_num_floats + i * 4 + j] = transform[i][j];
+            }
+        }
+
+        for (int i = 0; i < 4; i++) {
+            s_ellipse_instance_data[(s_num_draw_ellipses - 1) * s_ellipse_instance_data_num_floats + 16 + i] = s_fill_color[i];
+        }
+    }
+}
+
 void canvash_rotate_2D(float rad) {
-    // TODO here we will change current_transform to be rotated
-    fprintf(stderr, "[ERROR] cannot call canvash_rotate_2D.\n");
-    return;
+    glm_rotate_z(s_current_transform, rad, s_current_transform);
 }
 
 void canvash_fill_color(vec4 color) {
@@ -399,3 +546,6 @@ void canvash_background(float *background) {
     glm_vec3_copy(background, s_background);
 }
 
+void canvash_reset_transform_2D() {
+    glm_mat4_identity(s_current_transform);
+}

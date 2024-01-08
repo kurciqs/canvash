@@ -27,16 +27,22 @@ int main() {
     while (!canvash_running()) {
         // NOTE essential (do not leave out)
         canvash_clear_screen();
-        canvash_background((vec3){0.2f, 0.3f, 0.3f});
 
         // NOTE optional, this is where you choose what to draw
-//        canvash_rotate_2D(glm_rad(45));
-        // TODO canvash_color(...)
-        canvash_fill_color((vec4){0.9f, 0.9f, 0.2f, 1.0f});
-        canvash_rectangle_2D((vec2){-100.0f, -100.0f}, (vec2){100.0f, 100.0f});
-//        canvash_rectangle_2D((vec2){0.0f, 0.0f}, (vec2){1.0f, 1.0f});
-//        canvash_rectangle_2D((vec2){0.0f, 0.0f}, (vec2){1.0f, 1.0f});
+        canvash_background((vec3){0.2f, 0.3f, (float)glfwGetTime()/20.0f});
 
+//        canvash_rotate_2D(glm_rad(45));
+
+        canvash_fill_color((vec4){0.3f, 0.2f, 0.6f, 1.0f});
+        canvash_rectangle_2D((vec2){-75.0f, -50.0f}, (vec2){75.0f, 50.0f});
+
+        canvash_reset_transform_2D();
+
+        canvash_fill_color((vec4){0.9f, 0.5f, 0.1f, 1.0f});
+        canvash_ellipse_2D((vec2){0.0f, 0.0f}, 150.0f, 100.0f);
+
+        canvash_fill_color((vec4){0.0f, 0.0f, 0.0f, 1.0f});
+        canvash_rectangle_2D((vec2){-5.0f, -5.0f}, (vec2){5.0f, 5.0f});
 
         // NOTE essential (do not leave out)
         canvash_render();

@@ -5,8 +5,10 @@ add_library(${PROJECT_NAME} canvash.c canvash.h shader.c shader.h)
 
 # Resources
 configure_file(${PROJECT_SOURCE_DIR}/res/img/icon.png ${CMAKE_BINARY_DIR}/res/img/icon.png COPYONLY)
-configure_file(${PROJECT_SOURCE_DIR}/res/shader/vert.glsl ${CMAKE_BINARY_DIR}/res/shader/vert.glsl COPYONLY)
-configure_file(${PROJECT_SOURCE_DIR}/res/shader/frag.glsl ${CMAKE_BINARY_DIR}/res/shader/frag.glsl COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/res/shader/rect_vert.glsl ${CMAKE_BINARY_DIR}/res/shader/rect_vert.glsl COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/res/shader/rect_frag.glsl ${CMAKE_BINARY_DIR}/res/shader/rect_frag.glsl COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/res/shader/ell_vert.glsl ${CMAKE_BINARY_DIR}/res/shader/ell_vert.glsl COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/res/shader/ell_frag.glsl ${CMAKE_BINARY_DIR}/res/shader/ell_frag.glsl COPYONLY)
 
 # Includes
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/lib/glad/include)
