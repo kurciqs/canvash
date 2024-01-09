@@ -34,13 +34,17 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2);
 
 void canvash_ellipse_2D(vec2 p, float a, float b);
 
+void canvash_circle_2D(vec2 p, float r);
+
+void canvash_triangle_2D(float *p1, float *p2, float *p3);
+
 void canvash_rotate_2D(float rad);
 
+void canvash_scale_2D(float factor_x, float factor_y);
+
+void canvash_translate_2D(float move_x, float move_y);
+
 void canvash_reset_transform_2D();
-
-void canvash_scale_2D(float factorX, float factorY);
-
-void canvash_transform_2D(float moveX, float moveY);
 
 void canvash_fill_color(vec4 color);
 
@@ -52,3 +56,6 @@ void canvash_no_outline();
 
 void canvash_outline_size(float size);
 
+float canvash_time();
+
+void canvash_get_window_size(float* width, float* height);

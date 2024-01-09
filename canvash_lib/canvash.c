@@ -8,14 +8,22 @@
 
 static GLFWwindow *s_window;
 static vec2 s_window_size;
+static vec2 s_old_window_size;
+static vec2 s_old_window_pos;
+static int s_fullscreen = 0;
 
 static void (*s_key_callback)(int, int, int); // key_callback(int key, int scancode, int action)
 static void (*s_mouse_callback)(int, int, float, float); // mouse_callback(int button, int action, float xpos, float ypos)
 
 static CanvashMode s_mode;
+static int s_init = 0;
 
 // NOTE have this be defined by like a CURRENT transform variable give by the user with rotate() etc and make it revertable
-static mat4 s_current_transform;
+static vec3 s_current_translate;
+static vec3 s_current_rotation;
+static vec3 s_current_scale;
+static float s_current_rotation_angle;
+
 static vec4 s_fill_color;
 static bool s_fill;
 // NOTE outlines are explicitly rendered with lines except in the case of ellipses
@@ -25,6 +33,7 @@ static bool s_outline;
 static vec3 s_background;
 //static mat4 s_view; // 3D mode
 static mat4 s_proj;
+static unsigned int s_num_objects = 0;
 
 //--------------------------------------------------------------
 
@@ -69,10 +78,19 @@ static GLuint s_ellipse_ebo;
 static GLuint s_ellipse_instance_data_vbo;
 
 // TODO change the instance data config
-static int s_num_draw_triangles;
-static float *s_triangles_object_data_vertices; /* mat4x4 transform, vec3 pos, vec4 col, bool fill */
+static int s_num_draw_triangles = 0;
+static float *s_triangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
+static const size_t s_triangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
+static const size_t s_triangle_instance_data_num_floats = 4 * 4 + 4;
+static float s_triangle_object_data_vertices[6] = {
+        -0.5f, -0.5f,
+        0.5f, -0.5f,
+        0.0f, 0.5f
+};
 static Shader s_triangle_shader;
-// NOTE triangles have explicitly USER-DEFINED vertices so they are essentially batch rendered
+static GLuint s_triangle_vbo;
+static GLuint s_triangle_vao;
+static GLuint s_triangle_instance_data_vbo;
 
 // TODO this is really important for outlines
 static int s_num_draw_lines;
@@ -103,7 +121,21 @@ void glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, in
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
     if (key == CANVASH_KEY_F11 && action == GLFW_PRESS) {
-        // TODO enter/exit fullscreen
+        if (s_fullscreen) {
+            glfwSetWindowMonitor(window, NULL, s_old_window_pos[0], s_old_window_pos[1], (int) s_old_window_size[0], (int) s_old_window_size[1], GLFW_DONT_CARE);
+            s_fullscreen = 0;
+        } else {
+            GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+            s_old_window_size[0] = s_window_size[0];
+            s_old_window_size[1] = s_window_size[1];
+            int pos_x, pos_y;
+            glfwGetWindowPos(window, &pos_x, &pos_y);
+            s_old_window_pos[0] = (float) pos_x;
+            s_old_window_pos[1] = (float) pos_y;
+            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+            s_fullscreen = 1;
+        }
     }
     // NOTE: user defined key callback
     if (s_key_callback != NULL) {
@@ -207,8 +239,17 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
     glGenBuffers(1, &s_ellipse_ebo);
     glGenBuffers(1, &s_ellipse_instance_data_vbo);
 
+    s_triangle_shader = create_shader("res/shader/tri_vert.glsl", "res/shader/tri_frag.glsl");
+    glGenVertexArrays(1, &s_triangle_vao);
+    glGenBuffers(1, &s_triangle_vbo);
+    glGenBuffers(1, &s_triangle_instance_data_vbo);
+
     // NOTE set all of the styling data to basic (very gray and boring)
-    glm_mat4_identity(s_current_transform);
+    glm_vec3_zero(s_current_translate);
+    glm_vec3_copy((vec3) {0.0f, 0.0f, 1.0f}, s_current_rotation);
+    glm_vec3_one(s_current_scale);
+    s_current_rotation_angle = 0.0f;
+
     glm_mat4_identity(s_proj);
     glm_vec3_one(s_fill_color); // white
     glm_vec3_zero(s_outline_color); // black
@@ -217,20 +258,32 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
     s_outline = false; // outline
     s_background[0] = s_background[1] = s_background[2] = 0.5f; // gray
 
+    s_init = 1;
     return 1;
 }
 
 int canvash_running() {
-    return glfwWindowShouldClose(s_window);
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_running() without initialization first. call canvash_init() before doing anything else.\n");
+        return 0;
+    }
+    return !glfwWindowShouldClose(s_window);
 }
 
 void canvash_clear_screen() {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_clear_screen() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(s_background[0], s_background[1], s_background[2], 1.0f);
 }
 
 void canvash_render() {
-    // TODO
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_render() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
     glm_ortho(-s_window_size[0] / 2.0f, s_window_size[0] / 2.0f, -s_window_size[1] / 2.0f, s_window_size[1] / 2.0f, -1.0f, 1.0f, s_proj);
 
     if (s_rectangle_instance_data && s_num_draw_rectangles) {
@@ -314,22 +367,22 @@ void canvash_render() {
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(s_ellipse_object_data_indices), s_ellipse_object_data_indices, GL_STATIC_DRAW);
 
             // NOTE this gives the position of the base quad vertices
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *)0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *) 0);
             glEnableVertexAttribArray(0);
 
             // NOTE this is different for each ellipse
             glBindBuffer(GL_ARRAY_BUFFER, s_ellipse_instance_data_vbo);
-            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)s_ellipse_instance_data_size * s_num_draw_ellipses, s_ellipse_instance_data, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) s_ellipse_instance_data_size * s_num_draw_ellipses, s_ellipse_instance_data, GL_STATIC_DRAW);
 
             // NOTE this is the model matrix
             for (unsigned int i = 0; i < 4; i++) {
-                glVertexAttribPointer(1 + i, 4, GL_FLOAT, GL_FALSE, (GLsizei)(s_ellipse_instance_data_num_floats * sizeof(GLfloat)), (void *)(sizeof(GLfloat) * i * 4));
+                glVertexAttribPointer(1 + i, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_ellipse_instance_data_num_floats * sizeof(GLfloat)), (void *) (sizeof(GLfloat) * i * 4));
                 glEnableVertexAttribArray(1 + i);
                 glVertexAttribDivisor(1 + i, 1);
             }
 
             // NOTE this is the color
-            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei)(s_ellipse_instance_data_num_floats * sizeof(GLfloat)), (void *)(16 * sizeof(GLfloat)));
+            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_ellipse_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
             glEnableVertexAttribArray(4 + 1);
             glVertexAttribDivisor(4 + 1, 1); // This also advances once per instance
 
@@ -348,25 +401,92 @@ void canvash_render() {
             glBindVertexArray(0);
         }
 
-        free((void *)s_ellipse_instance_data);
+        free((void *) s_ellipse_instance_data);
         s_ellipse_instance_data = NULL;
         s_num_draw_ellipses = 0;
     }
 
+    if (s_triangle_instance_data && s_num_draw_triangles) {
+
+        float triangle_object_data_vertices_new[12];
+
+        int ind = 0;
+        for (int i = 0; i < 4; i++) {
+            triangle_object_data_vertices_new[i * 3 + 0] = s_triangle_object_data_vertices[ind++];
+            triangle_object_data_vertices_new[i * 3 + 1] = s_triangle_object_data_vertices[ind++];
+            triangle_object_data_vertices_new[i * 3 + 2] = 0;
+        }
+
+        {
+            glBindVertexArray(s_triangle_vao);
+
+            glBindBuffer(GL_ARRAY_BUFFER, s_triangle_vbo);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_object_data_vertices_new), triangle_object_data_vertices_new, GL_STATIC_DRAW);
+
+            // NOTE this gives the position of the base triangle vertices
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *) 0);
+            glEnableVertexAttribArray(0);
+
+            // NOTE this is different for each triangle
+            glBindBuffer(GL_ARRAY_BUFFER, s_triangle_instance_data_vbo);
+            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) s_triangle_instance_data_size * s_num_draw_triangles, s_triangle_instance_data, GL_STATIC_DRAW);
+
+            // NOTE this is the model matrix
+            for (unsigned int i = 0; i < 4; i++) {
+                glVertexAttribPointer(1 + i, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_triangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (sizeof(GLfloat) * i * 4));
+                glEnableVertexAttribArray(1 + i);
+                glVertexAttribDivisor(1 + i, 1);
+            }
+
+            // NOTE this is the color
+            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_triangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(4 + 1);
+            glVertexAttribDivisor(4 + 1, 1); // This also advances once per instance
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
+
+            activate_shader(s_triangle_shader);
+            glBindVertexArray(s_triangle_vao);
+
+            shader_upload_m4(s_triangle_shader, "u_proj", s_proj);
+
+            glDrawArraysInstanced(GL_TRIANGLES, 0, 3, s_num_draw_triangles);
+
+            deactivate_shader();
+            glBindVertexArray(0);
+        }
+
+        free((void *) s_triangle_instance_data);
+        s_triangle_instance_data = NULL;
+        s_num_draw_triangles = 0;
+    }
+
+
     // NOTE reset everything
-    glm_mat4_identity(s_current_transform);
+    glm_vec3_zero(s_current_translate);
+    glm_vec3_copy((vec3) {0.0f, 0.0f, 1.0f}, s_current_rotation);
+    glm_vec3_one(s_current_scale);
+    s_current_rotation_angle = 0.0f;
+
     glm_mat4_identity(s_proj);
     glm_vec3_one(s_fill_color); // white
     glm_vec3_zero(s_outline_color); // black
     s_fill = true; // fill
     s_outline_size = 0.1f; // narrow
     s_outline = false; // outline
+    s_num_objects = 0;
 
     glfwSwapBuffers(s_window);
     glfwPollEvents();
 }
 
 void canvash_terminate() {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_terminate() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
     delete_shader(s_rectangle_shader);
     glDeleteVertexArrays(1, &s_rectangle_vao);
     glDeleteBuffers(1, &s_rectangle_vbo);
@@ -379,24 +499,52 @@ void canvash_terminate() {
     glDeleteBuffers(1, &s_ellipse_ebo);
     glDeleteBuffers(1, &s_ellipse_instance_data_vbo);
 
-    free((void *) s_rectangle_instance_data);
-    free((void *) s_ellipse_instance_data);
+    delete_shader(s_triangle_shader);
+    glDeleteVertexArrays(1, &s_triangle_vao);
+    glDeleteBuffers(1, &s_triangle_vbo);
+    glDeleteBuffers(1, &s_triangle_instance_data_vbo);
+
+//    free((void *) s_rectangle_instance_data);
+//    free((void *) s_ellipse_instance_data);
+//    free((void *) s_triangle_instance_data);
 
     glfwDestroyWindow(s_window);
     glfwTerminate();
+
+    s_init = 0;
 }
 
 void canvash_set_key_callback(void (*key_callback)(int, int, int)) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_set_key_callback() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
     s_key_callback = key_callback;
 }
 
 void canvash_set_mouse_callback(void (*mouse_callback)(int, int, float, float)) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_set_mouse_callback() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
     s_mouse_callback = mouse_callback;
 }
 
 // -------------------------------------------------------------
 
 void canvash_rectangle_2D(vec2 p1, vec2 p2) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_rectangle_2D() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
+        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
+        return;
+    }
+
     if (s_mode == threedimensional) {
         fprintf(stderr, "[ERROR] cannot call canvash_rectangle_2D while in threedimensional mode.\n");
         return;
@@ -410,6 +558,7 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
 
     if (s_fill) {
         // NOTE renders the fill mesh
+        s_num_objects++;
 
         // NOTE resize the current instance data to fit with the added rectangle
         s_num_draw_rectangles++;
@@ -435,15 +584,21 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
         // NOTE 16 floats for transform matrix + 4 floats for color
 
         mat4 transform;
-        glm_mat4_copy(s_current_transform, transform);
+        glm_mat4_identity(transform);
 
         vec2 center;
         glm_vec2_add(p1, p2, center);
         glm_vec2_scale(center, 0.5f, center);
 
-        // TODO figure out the z-indexing by changing the z translation should work fine
-        glm_translate(transform, (vec3) {center[0], center[1], 0.01f});
-        glm_scale(transform, (vec3) {fabsf(p2[0] - p1[0]), fabsf(p2[1] - p1[1]), 1.0f}); // will scale by the width and height and since the initial size is unitary this will translate into pixels on the screen
+        // NOTE z-indexing by changing the z translation (should work fine)
+        glm_translate(transform, (vec3) {center[0], center[1], -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
+        glm_translate(transform, s_current_translate);
+        if (s_current_rotation_angle != 0.0f)
+            glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
+        // NOTE will scale by the width and height and since the initial size is unitary this will translate into pixels on the screen
+        glm_scale(transform, (vec3) {fabsf(p2[0] - p1[0]), fabsf(p2[1] - p1[1]), 1.0f});
+        glm_scale(transform, s_current_scale);
+
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -458,6 +613,17 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
 }
 
 void canvash_ellipse_2D(float *p, float a, float b) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_ellipse_2D() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
+        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
+        return;
+    }
+
+
     if (s_mode == threedimensional) {
         fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while in threedimensional mode.\n");
         return;
@@ -471,6 +637,7 @@ void canvash_ellipse_2D(float *p, float a, float b) {
 
     if (s_fill) {
         // NOTE renders the fill mesh
+        s_num_objects++;
 
         // NOTE resize the current instance data to fit with the added ellipse
         s_num_draw_ellipses++;
@@ -496,13 +663,19 @@ void canvash_ellipse_2D(float *p, float a, float b) {
         // NOTE 16 floats for transform matrix + 4 floats for color
 
         mat4 transform;
-        glm_mat4_copy(s_current_transform, transform);
+        glm_mat4_identity(transform);
 
         vec2 center;
         glm_vec2_copy(p, center);
 
-        glm_translate(transform, (vec3) {center[0], center[1], 0.0f});
-        glm_scale(transform, (vec3) {a, b, 1.0f}); // will scale by the r1 and r2 and since the initial size is unitary this will translate into pixels on the screen
+        glm_translate(transform, (vec3) {center[0], center[1], -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
+        glm_translate(transform, s_current_translate);
+        if (s_current_rotation_angle != 0.0f)
+            glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
+        // NOTE will scale by the r1 and r2 and since the initial size is unitary this will translate into pixels on the screen
+        glm_scale(transform, (vec3) {a, b, 1.0f});
+        glm_scale(transform, s_current_scale);
+
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -516,36 +689,223 @@ void canvash_ellipse_2D(float *p, float a, float b) {
     }
 }
 
+void canvash_triangle_2D(float *p1, float *p2, float *p3) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_triangle_2D() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
+        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
+        return;
+    }
+
+    if (s_mode == threedimensional) {
+        fprintf(stderr, "[ERROR] cannot call canvash_triangle_2D while in threedimensional mode.\n");
+        return;
+    }
+
+    // TODO this will render the outline with the line renderer
+    if (s_outline) {
+        fprintf(stderr, "[ERROR] cannot call canvash_triangle_2D while in outline mode.\n");
+        return;
+    }
+
+    if (s_fill) {
+        // NOTE renders the fill mesh
+        s_num_objects++;
+
+        // NOTE resize the current instance data to fit with the added triangle
+        s_num_draw_triangles++;
+        if (!s_triangle_instance_data && !s_num_draw_triangles) {
+            s_triangle_instance_data = (float *) malloc(s_triangle_instance_data_size * s_num_draw_triangles);
+            if (s_triangle_instance_data == NULL) {
+                fprintf(stderr, "[ERROR] failed to allocate any triangle instance data.\n");
+                s_num_draw_triangles--;
+                return;
+            }
+        } else {
+            float *new_triangle_instance_data = (float *) realloc(s_triangle_instance_data, s_triangle_instance_data_size * s_num_draw_triangles);
+            if (new_triangle_instance_data == NULL) {
+                fprintf(stderr, "[ERROR] failed to reallocate new triangle instance data.\n");
+                s_num_draw_triangles--;
+                return;
+            } else {
+                s_triangle_instance_data = new_triangle_instance_data;
+            }
+        }
+
+        // NOTE add the instance data
+        // NOTE 16 floats for transform matrix + 4 floats for color
+
+        mat4 transform;
+        glm_mat4_identity(transform);
+
+        // Translation
+        vec2 translate_vec;
+        glm_vec2_sub(p1, (vec2) {-0.5f, -0.5f}, translate_vec);
+
+        vec3 translation;
+        float translate_x = p1[0] - (-0.5f);
+        float translate_y = p1[1] - (-0.5f);
+
+        glm_translate(transform, s_current_translate);
+
+        // TODO
+        /*
+        // Rotation
+        vec2 diff1, diff2;
+        glm_vec2_sub(p2, p1, diff1);
+        glm_vec2_sub((vec2){0.5f,-0.5f}, (vec2){-0.5f,-0.5f}, diff2);
+        float angle = glm_vec2_angle(diff1, diff2);
+         */
+        glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
+
+        /*
+        // Scaling
+        float scale_x = glm_vec2_distance(target.vertices[0], target.vertices[1]) /
+                        glm_vec2_distance(original->vertices[0], original->vertices[1]);
+        float scale_y = glm_vec2_distance(target.vertices[1], target.vertices[2]) /
+                        glm_vec2_distance(original->vertices[1], original->vertices[2]);
+
+        // Apply transformations to the original triangle
+        glm_translate(original->vertices[0], translate_vec);
+        glm_rotate(original->vertices[0], angle, (vec3){0.0f, 0.0f, 1.0f}); // Assuming 2D rotation around z-axis
+        glm_scale_uni(original->vertices[0], scale_x);
+        glm_scale(original->vertices[1], (vec3){1.0f, scale_y, 1.0f});
+        */
+
+        glm_scale(transform, s_current_scale);
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                s_triangle_instance_data[(s_num_draw_triangles - 1) * s_triangle_instance_data_num_floats + i * 4 + j] = transform[i][j];
+                printf("%f %d %d\n", transform[i][j], i, j);
+            }
+        }
+
+        for (int i = 0; i < 4; i++) {
+            s_triangle_instance_data[(s_num_draw_triangles - 1) * s_triangle_instance_data_num_floats + 16 + i] = s_fill_color[i];
+        }
+
+    }
+}
+
 void canvash_rotate_2D(float rad) {
-    glm_rotate_z(s_current_transform, rad, s_current_transform);
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_rotate_2D() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    s_current_rotation_angle = rad;
 }
 
 void canvash_fill_color(vec4 color) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_fill_color() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
     s_fill = true;
     glm_vec4_copy(color, s_fill_color);
 }
 
 void canvash_outline_color(vec4 color) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_outline_color() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
     s_outline = true;
     glm_vec4_copy(color, s_outline_color);
 }
 
 void canvash_no_fill() {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_no_fill() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
     s_fill = false;
 }
 
 void canvash_no_outline() {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_no_outline() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
     s_outline = false;
 }
 
 void canvash_outline_size(float size) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_outline_size() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
     s_outline_size = size;
 }
 
 void canvash_background(float *background) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_background() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
     glm_vec3_copy(background, s_background);
 }
 
 void canvash_reset_transform_2D() {
-    glm_mat4_identity(s_current_transform);
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_reset_transform_2D() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    glm_vec3_zero(s_current_translate);
+    glm_vec3_copy((vec3) {0.0f, 0.0f, 1.0f}, s_current_rotation);
+    glm_vec3_one(s_current_scale);
+    s_current_rotation_angle = 0.0f;
+}
+
+float canvash_time() {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_time() without initialization first. call canvash_init() before doing anything else.\n");
+        return 0.0f;
+    }
+
+    return (float) glfwGetTime() * 10.0f;
+}
+
+void canvash_circle_2D(float *p, float r) {
+    // NOTE just like the ellipse but put safeguards before so that the correct function name is used in the error log
+
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_circle_2D() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
+        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
+        return;
+    }
+
+
+    if (s_mode == threedimensional) {
+        fprintf(stderr, "[ERROR] cannot call canvash_circle_2D while in threedimensional mode.\n");
+        return;
+    }
+
+    // TODO this will render the outline with the line renderer
+    if (s_outline) {
+        fprintf(stderr, "[ERROR] cannot call canvash_circle_2D while in outline mode.\n");
+        return;
+    }
+
+    canvash_ellipse_2D(p, r, r);
+}
+
+void canvash_get_window_size(float *width, float *height) {
+    *width = s_window_size[0];
+    *height = s_window_size[1];
 }
