@@ -46,7 +46,7 @@ int main() {
         canvash_fill_color((vec4){0.9f, 0.5f, 0.1f, 1.0f});
         canvash_rectangle_2D((vec2){-75.0f, -50.0f}, (vec2){75.0f, 50.0f});
         */
-        canvash_fill_color((vec4){0.0f, 0.0f, 0.0f, 1.0f});
+        canvash_fill_color((vec4){1.0f, 0.0f, 0.0f, 1.0f});
 //        canvash_circle_2D((vec2){0.0f, 0.0f}, 10.0f);
 
         canvash_triangle_2D((vec2){-50.0f, -50.0f}, (vec2){50.0f, -50.0f}, (vec2){0.0f, 50.0f});

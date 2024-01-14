@@ -82,11 +82,9 @@ static int s_num_draw_triangles = 0;
 static float *s_triangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
 static const size_t s_triangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
 static const size_t s_triangle_instance_data_num_floats = 4 * 4 + 4;
-static float s_triangle_object_data_vertices[6] = {
-        -0.5f, -0.5f,
-        0.5f, -0.5f,
-        0.0f, 0.5f
-};
+static float *s_triangle_object_data;
+static float s_triangle_object_data_size = 3 * sizeof(float);
+static float s_triangle_object_data_num_floats = 3;
 static Shader s_triangle_shader;
 static GLuint s_triangle_vbo;
 static GLuint s_triangle_vao;
@@ -408,20 +406,11 @@ void canvash_render() {
 
     if (s_triangle_instance_data && s_num_draw_triangles) {
 
-        float triangle_object_data_vertices_new[12];
-
-        int ind = 0;
-        for (int i = 0; i < 4; i++) {
-            triangle_object_data_vertices_new[i * 3 + 0] = s_triangle_object_data_vertices[ind++];
-            triangle_object_data_vertices_new[i * 3 + 1] = s_triangle_object_data_vertices[ind++];
-            triangle_object_data_vertices_new[i * 3 + 2] = 0;
-        }
-
         {
             glBindVertexArray(s_triangle_vao);
 
             glBindBuffer(GL_ARRAY_BUFFER, s_triangle_vbo);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_object_data_vertices_new), triangle_object_data_vertices_new, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) s_triangle_object_data_size * s_num_draw_triangles, s_triangle_object_data, GL_STATIC_DRAW);
 
             // NOTE this gives the position of the base triangle vertices
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *) 0);
@@ -437,6 +426,7 @@ void canvash_render() {
                 glEnableVertexAttribArray(1 + i);
                 glVertexAttribDivisor(1 + i, 1);
             }
+
 
             // NOTE this is the color
             glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_triangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
@@ -461,6 +451,7 @@ void canvash_render() {
         s_triangle_instance_data = NULL;
         s_num_draw_triangles = 0;
     }
+
 
 
     // NOTE reset everything
@@ -734,6 +725,7 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
                 s_triangle_instance_data = new_triangle_instance_data;
             }
         }
+        // TODO fill the object data in with things and reallocation properly
 
         // NOTE add the instance data
         // NOTE 16 floats for transform matrix + 4 floats for color
@@ -780,7 +772,6 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 s_triangle_instance_data[(s_num_draw_triangles - 1) * s_triangle_instance_data_num_floats + i * 4 + j] = transform[i][j];
-                printf("%f %d %d\n", transform[i][j], i, j);
             }
         }
 
