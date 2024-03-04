@@ -79,18 +79,12 @@ static GLuint s_ellipse_instance_data_vbo;
 
 // TODO change the instance data config
 static int s_num_draw_triangles = 0;
-static float *s_triangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
-static const size_t s_triangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
-static const size_t s_triangle_instance_data_num_floats = 4 * 4 + 4;
 static float *s_triangle_object_data;
-static const size_t s_triangle_object_data_size = 3 * 3 * sizeof(float);
-static const size_t s_triangle_object_data_num_floats = 3 * 3;  // 9 floats for 1 triangle
+static const size_t s_triangle_object_data_size = 3 * (3 * sizeof(float) + 4 * 4 * sizeof(float) + 4 * sizeof(float));  /* 3 x (vec3 vertices, mat4x4 transform, vec4 col)*/
+static const size_t s_triangle_object_data_num_floats = 3 * (3 + 4 * 4 + 4);  // 3 * (3, 16, 4) floats for 1 triangle
 static Shader s_triangle_shader;
 static GLuint s_triangle_vbo;
 static GLuint s_triangle_vao;
-static GLuint s_triangle_instance_data_vbo;
-
-
 
 // TODO this is really important for outlines
 static int s_num_draw_lines;
@@ -242,7 +236,6 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
     s_triangle_shader = create_shader("res/shader/tri_vert.glsl", "res/shader/tri_frag.glsl");
     glGenVertexArrays(1, &s_triangle_vao);
     glGenBuffers(1, &s_triangle_vbo);
-    glGenBuffers(1, &s_triangle_instance_data_vbo);
 
     // NOTE set all of the styling data to basic (very gray and boring)
     glm_vec3_zero(s_current_translate);
@@ -406,7 +399,7 @@ void canvash_render() {
         s_num_draw_ellipses = 0;
     }
 
-    if (s_triangle_instance_data && s_num_draw_triangles) {
+    if (s_triangle_object_data && s_num_draw_triangles) {
 
         {
             glBindVertexArray(s_triangle_vao);
@@ -415,25 +408,18 @@ void canvash_render() {
             glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) s_triangle_object_data_size * s_num_draw_triangles, s_triangle_object_data, GL_STATIC_DRAW);
 
             // NOTE this gives the position of the base triangle vertices
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *) 0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat) + 4 * 4 * sizeof(GLfloat) + 4 * sizeof(GLfloat), (void *) 0);
             glEnableVertexAttribArray(0);
-            // TODO BIG NO IDEA
-
-            // NOTE this is different for each triangle
-            glBindBuffer(GL_ARRAY_BUFFER, s_triangle_instance_data_vbo);
-            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) s_triangle_instance_data_size * s_num_draw_triangles, s_triangle_instance_data, GL_STATIC_DRAW);
 
             // NOTE this is the model matrix
             for (unsigned int i = 0; i < 4; i++) {
-                glVertexAttribPointer(1 + i, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_triangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (sizeof(GLfloat) * i * 4));
+                glVertexAttribPointer(1 + i, 4, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat) + 4 * 4 * sizeof(GLfloat) + 4 * sizeof(GLfloat), (void *) (sizeof(GLfloat) * 3 + sizeof(GLfloat) * i * 4));
                 glEnableVertexAttribArray(1 + i);
-                glVertexAttribDivisor(1 + i, 1);
             }
 
             // NOTE this is the color
-            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_triangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
+            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat) + 4 * 4 * sizeof(GLfloat) + 4 * sizeof(GLfloat), (void *) (sizeof(GLfloat) * 3 + 16 * sizeof(GLfloat)));
             glEnableVertexAttribArray(4 + 1);
-            glVertexAttribDivisor(4 + 1, 1); // This also advances once per instance
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
@@ -443,17 +429,16 @@ void canvash_render() {
 
             shader_upload_m4(s_triangle_shader, "u_proj", s_proj);
 
-            glDrawArraysInstanced(GL_TRIANGLES, 0, 6, s_num_draw_triangles);
+            glDrawArrays(GL_TRIANGLES, 0, s_num_draw_triangles * 3);
 
             deactivate_shader();
             glBindVertexArray(0);
         }
 
-        free((void *) s_triangle_instance_data);
-        s_triangle_instance_data = NULL;
+        free((void *) s_triangle_object_data);
+        s_triangle_object_data = NULL;
         s_num_draw_triangles = 0;
     }
-
 
 
     // NOTE reset everything
@@ -495,11 +480,9 @@ void canvash_terminate() {
     delete_shader(s_triangle_shader);
     glDeleteVertexArrays(1, &s_triangle_vao);
     glDeleteBuffers(1, &s_triangle_vbo);
-    glDeleteBuffers(1, &s_triangle_instance_data_vbo);
 
 //    free((void *) s_rectangle_instance_data);
 //    free((void *) s_ellipse_instance_data);
-//    free((void *) s_triangle_instance_data);
 
     glfwDestroyWindow(s_window);
     glfwTerminate();
@@ -710,23 +693,6 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
 
         // NOTE resize the current instance data to fit with the added triangle
         s_num_draw_triangles++;
-        if (!s_triangle_instance_data && !s_num_draw_triangles) {
-            s_triangle_instance_data = (float *) malloc(s_triangle_instance_data_size * s_num_draw_triangles);
-            if (s_triangle_instance_data == NULL) {
-                fprintf(stderr, "[ERROR] failed to allocate any triangle instance data.\n");
-                s_num_draw_triangles--;
-                return;
-            }
-        } else {
-            float *new_triangle_instance_data = (float *) realloc(s_triangle_instance_data, s_triangle_instance_data_size * s_num_draw_triangles);
-            if (new_triangle_instance_data == NULL) {
-                fprintf(stderr, "[ERROR] failed to reallocate new triangle instance data.\n");
-                s_num_draw_triangles--;
-                return;
-            } else {
-                s_triangle_instance_data = new_triangle_instance_data;
-            }
-        }
 
         if (!s_triangle_object_data && !s_num_draw_triangles) {
             s_triangle_object_data = (float *) malloc(s_triangle_object_data_size * s_num_draw_triangles);
@@ -745,44 +711,59 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
                 s_triangle_object_data = new_triangle_object_data;
             }
         }
-        // TODO fill the object data in with things and reallocation properly
 
-        s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + 0] = p1[0];
-        s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + 1] = p1[1];
-        s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + 2] = 0.0f;
+        // NOTE by no means effective or elegant, but tf do i care
+        {
+            int ind = 0;
+            mat4 transform;
+            glm_mat4_identity(transform);
 
-        s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + 3] = p2[0];
-        s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + 4] = p2[1];
-        s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + 5] = 0.0f;
+            glm_translate(transform, s_current_translate);
+            glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
+            glm_scale(transform, s_current_scale);
 
-        s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + 6] = p3[0];
-        s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + 7] = p3[1];
-        s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + 8] = 0.0f;
+            s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = p1[0];
+            s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = p1[1];
+            s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = 0.0f;
 
-//        for (int i = 0; i < 9; i++) {
-//            printf("%d %f\n", s_num_draw_triangles, s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + i]);
-//        }
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = transform[i][j];
+                }
+            }
 
-        // NOTE add the instance data
-        // NOTE 16 floats for transform matrix + 4 floats for color
+            for (int i = 0; i < 4; i++) {
+                s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = s_fill_color[i];
+            }
 
-        mat4 transform;
-        glm_mat4_identity(transform);
+            s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = p2[0];
+            s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = p2[1];
+            s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = 0.0f;
 
-        glm_translate(transform, s_current_translate);
-        glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
-        glm_scale(transform, s_current_scale);
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = transform[i][j];
+                }
+            }
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                s_triangle_instance_data[(s_num_draw_triangles - 1) * s_triangle_instance_data_num_floats + i * 4 + j] = transform[i][j];
+            for (int i = 0; i < 4; i++) {
+                s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = s_fill_color[i];
+            }
+
+            s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = p3[0];
+            s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = p3[1];
+            s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = 0.0f;
+
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = transform[i][j];
+                }
+            }
+
+            for (int i = 0; i < 4; i++) {
+                s_triangle_object_data[(s_num_draw_triangles - 1) * s_triangle_object_data_num_floats + ind++] = s_fill_color[i];
             }
         }
-
-        for (int i = 0; i < 4; i++) {
-            s_triangle_instance_data[(s_num_draw_triangles - 1) * s_triangle_instance_data_num_floats + 16 + i] = s_fill_color[i];
-        }
-
     }
 }
 
