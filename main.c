@@ -30,13 +30,12 @@ int main() {
 
 
         canvash_background((vec3){0.2f, 0.3f, (float)glfwGetTime()/20.0f});
-
-        /*canvash_rotate_2D(glm_rad(45.0f + glfwGetTime()) * 10.10f);
+/*
+        canvash_rotate_2D(glm_rad(45.0f + glfwGetTime()) * 10.10f);
 
         canvash_fill_color((vec4){0.3f, 0.2f, 0.6f, 1.0f});
         canvash_ellipse_2D((vec2){100.0f, 0.0f}, 400.0f, 10.0f);
 
-        canvash_rotate_2D(glm_rad(90.0f + glfwGetTime()) * 20.10f);
 
         canvash_fill_color((vec4){0.9f, 0.2f, 0.1f, 1.0f});
         canvash_ellipse_2D((vec2){-150.0f, 150.0f}, 400.0f, 10.0f);
@@ -45,10 +44,11 @@ int main() {
 
         canvash_fill_color((vec4){0.9f, 0.5f, 0.1f, 1.0f});
         canvash_rectangle_2D((vec2){-75.0f, -50.0f}, (vec2){75.0f, 50.0f});
-        */
-        canvash_fill_color((vec4){1.0f, 0.0f, 0.0f, 1.0f});
-//        canvash_circle_2D((vec2){0.0f, 0.0f}, 10.0f);
 
+        canvash_circle_2D((vec2){0.0f, 0.0f}, 10.0f);
+*/
+        canvash_rotate_2D(glm_rad(90.0f + glfwGetTime()) * 20.10f);
+        canvash_fill_color((vec4){1.0f, 0.0f, 0.0f, 1.0f});
         canvash_triangle_2D((vec2){-50.0f, -50.0f}, (vec2){50.0f, -50.0f}, (vec2){0.0f, 50.0f});
 
         // NOTE essential (do not leave out)

@@ -82,13 +82,19 @@ static int s_num_draw_triangles = 0;
 static float *s_triangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
 static const size_t s_triangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
 static const size_t s_triangle_instance_data_num_floats = 4 * 4 + 4;
-static float *s_triangle_object_data;
-static float s_triangle_object_data_size = 3 * sizeof(float);
-static float s_triangle_object_data_num_floats = 3;
+static float s_triangle_object_data[6] = {
+        -0.5f, -0.5f,
+        0.5f, -0.5f,
+        0.0f, 0.5f
+};
+//static float s_triangle_object_data_size = 3 * sizeof(float);
+//static float s_triangle_object_data_num_floats = 3;
 static Shader s_triangle_shader;
 static GLuint s_triangle_vbo;
 static GLuint s_triangle_vao;
 static GLuint s_triangle_instance_data_vbo;
+
+
 
 // TODO this is really important for outlines
 static int s_num_draw_lines;
@@ -407,10 +413,18 @@ void canvash_render() {
     if (s_triangle_instance_data && s_num_draw_triangles) {
 
         {
+            float triangle_object_data_vertices_new[9];
+            int ind = 0;
+            for (int i = 0; i < 3; i++) {
+                triangle_object_data_vertices_new[i * 3 + 0] = s_triangle_object_data[ind++] * s_window_size[0] / 2.0f;
+                triangle_object_data_vertices_new[i * 3 + 1] = s_triangle_object_data[ind++] * s_window_size[1] / 2.0f;
+                triangle_object_data_vertices_new[i * 3 + 2] = 0;
+            }
+
             glBindVertexArray(s_triangle_vao);
 
             glBindBuffer(GL_ARRAY_BUFFER, s_triangle_vbo);
-            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) s_triangle_object_data_size * s_num_draw_triangles, s_triangle_object_data, GL_STATIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_object_data_vertices_new), triangle_object_data_vertices_new, GL_STATIC_DRAW);
 
             // NOTE this gives the position of the base triangle vertices
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *) 0);
@@ -426,7 +440,6 @@ void canvash_render() {
                 glEnableVertexAttribArray(1 + i);
                 glVertexAttribDivisor(1 + i, 1);
             }
-
 
             // NOTE this is the color
             glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_triangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
@@ -702,8 +715,8 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
         return;
     }
 
+    // NOTE renders the fill mesh
     if (s_fill) {
-        // NOTE renders the fill mesh
         s_num_objects++;
 
         // NOTE resize the current instance data to fit with the added triangle
@@ -733,40 +746,8 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
         mat4 transform;
         glm_mat4_identity(transform);
 
-        // Translation
-        vec2 translate_vec;
-        glm_vec2_sub(p1, (vec2) {-0.5f, -0.5f}, translate_vec);
-
-        vec3 translation;
-        float translate_x = p1[0] - (-0.5f);
-        float translate_y = p1[1] - (-0.5f);
-
         glm_translate(transform, s_current_translate);
-
-        // TODO
-        /*
-        // Rotation
-        vec2 diff1, diff2;
-        glm_vec2_sub(p2, p1, diff1);
-        glm_vec2_sub((vec2){0.5f,-0.5f}, (vec2){-0.5f,-0.5f}, diff2);
-        float angle = glm_vec2_angle(diff1, diff2);
-         */
         glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
-
-        /*
-        // Scaling
-        float scale_x = glm_vec2_distance(target.vertices[0], target.vertices[1]) /
-                        glm_vec2_distance(original->vertices[0], original->vertices[1]);
-        float scale_y = glm_vec2_distance(target.vertices[1], target.vertices[2]) /
-                        glm_vec2_distance(original->vertices[1], original->vertices[2]);
-
-        // Apply transformations to the original triangle
-        glm_translate(original->vertices[0], translate_vec);
-        glm_rotate(original->vertices[0], angle, (vec3){0.0f, 0.0f, 1.0f}); // Assuming 2D rotation around z-axis
-        glm_scale_uni(original->vertices[0], scale_x);
-        glm_scale(original->vertices[1], (vec3){1.0f, scale_y, 1.0f});
-        */
-
         glm_scale(transform, s_current_scale);
 
         for (int i = 0; i < 4; i++) {
