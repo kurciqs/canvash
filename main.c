@@ -47,9 +47,13 @@ int main() {
 
         canvash_circle_2D((vec2){0.0f, 0.0f}, 10.0f);
 */
-        canvash_rotate_2D(glm_rad(90.0f + glfwGetTime()) * 20.10f);
+
         canvash_fill_color((vec4){1.0f, 0.0f, 0.0f, 1.0f});
         canvash_triangle_2D((vec2){-50.0f, -50.0f}, (vec2){50.0f, -50.0f}, (vec2){0.0f, 50.0f});
+
+        canvash_rotate_2D(glm_rad(90.0f + glfwGetTime()) * 20.10f);
+        canvash_fill_color((vec4){0.0f, 1.0f, 0.0f, 1.0f});
+        canvash_triangle_2D((vec2){-50.0f, 150.0f}, (vec2){250.0f, 150.0f}, (vec2){0.0f, 250.0f});
 
         // NOTE essential (do not leave out)
         canvash_render();
