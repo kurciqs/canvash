@@ -15,6 +15,8 @@ static int s_fullscreen = 0;
 static void (*s_key_callback)(int, int, int); // key_callback(int key, int scancode, int action)
 static void (*s_mouse_callback)(int, int, float, float); // mouse_callback(int button, int action, float xpos, float ypos)
 
+// -------------------------------------------------------------
+
 static CanvashMode s_mode;
 static int s_init = 0;
 
@@ -26,10 +28,10 @@ static float s_current_rotation_angle;
 
 static vec4 s_fill_color;
 static bool s_fill;
-// NOTE outlines are explicitly rendered with lines except in the case of ellipses
-static vec4 s_outline_color;
-static float s_outline_size;
-static bool s_outline;
+// NOTE outlines (strokes) are explicitly rendered with lines except in the case of ellipses
+static vec4 s_stroke_color;
+static float s_stroke_strength;
+static bool s_stroke;
 static vec3 s_background;
 //static mat4 s_view; // 3D mode
 static mat4 s_proj;
@@ -37,11 +39,9 @@ static unsigned int s_num_objects = 0;
 
 //--------------------------------------------------------------
 
-// TODO think about how i could implement it so that measurements are in pixels
 // TODO fill will not work with instance data it has to be added to the line rendering (separate)
-// TODO gonna keep the color and the outline color and filling as static variables like the transform
-// TODO fill without an outline_color is not getting drawn
-// TODO safeguards for if not initialized
+// TODO gonna keep the color and the stroke color and filling as static variables like the transform
+// TODO fill without an stroke_color is not getting drawn
 static int s_num_draw_rectangles = 0;
 static float *s_rectangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
 static const size_t s_rectangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
@@ -58,6 +58,8 @@ static GLuint s_rectangle_vbo;
 static GLuint s_rectangle_vao;
 static GLuint s_rectangle_ebo;
 static GLuint s_rectangle_instance_data_vbo;
+
+// -------------------------------------------------------------
 
 // NOTE ellipse is also a circle
 static int s_num_draw_ellipses = 0;
@@ -77,7 +79,8 @@ static GLuint s_ellipse_vao;
 static GLuint s_ellipse_ebo;
 static GLuint s_ellipse_instance_data_vbo;
 
-// TODO change the instance data config
+// -------------------------------------------------------------
+
 static int s_num_draw_triangles = 0;
 static float *s_triangle_object_data;
 static const size_t s_triangle_object_data_size = 3 * (3 * sizeof(float) + 4 * 4 * sizeof(float) + 4 * sizeof(float));  /* 3 x (vec3 vertices, mat4x4 transform, vec4 col)*/
@@ -86,7 +89,9 @@ static Shader s_triangle_shader;
 static GLuint s_triangle_vbo;
 static GLuint s_triangle_vao;
 
-// TODO this is really important for outlines
+// -------------------------------------------------------------
+
+// TODO this is really important for outlines (strokes)
 static int s_num_draw_lines;
 static float *s_lines_object_data_vertices; /* mat4x4 transform, vec3 pos, vec4 col */
 static Shader s_line_shader;
@@ -245,10 +250,10 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
 
     glm_mat4_identity(s_proj);
     glm_vec3_one(s_fill_color); // white
-    glm_vec3_zero(s_outline_color); // black
+    glm_vec3_zero(s_stroke_color); // black
     s_fill = true; // fill
-    s_outline_size = 0.1f; // narrow
-    s_outline = false; // outline
+    s_stroke_strength = 0.1f; // narrow
+    s_stroke = false; // stroke
     s_background[0] = s_background[1] = s_background[2] = 0.5f; // gray
 
     s_init = 1;
@@ -449,10 +454,10 @@ void canvash_render() {
 
     glm_mat4_identity(s_proj);
     glm_vec3_one(s_fill_color); // white
-    glm_vec3_zero(s_outline_color); // black
+    glm_vec3_zero(s_stroke_color); // black
     s_fill = true; // fill
-    s_outline_size = 0.1f; // narrow
-    s_outline = false; // outline
+    s_stroke_strength = 0.1f; // narrow
+    s_stroke = false; // stroke
     s_num_objects = 0;
 
     glfwSwapBuffers(s_window);
@@ -490,6 +495,8 @@ void canvash_terminate() {
     s_init = 0;
 }
 
+// -------------------------------------------------------------
+
 void canvash_set_key_callback(void (*key_callback)(int, int, int)) {
     if (!s_init) {
         fprintf(stderr, "[ERROR] can't call canvash_set_key_callback() without initialization first. call canvash_init() before doing anything else.\n");
@@ -506,6 +513,16 @@ void canvash_set_mouse_callback(void (*mouse_callback)(int, int, float, float)) 
     }
 
     s_mouse_callback = mouse_callback;
+}
+
+void canvash_get_window_size(float *width, float *height) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_get_window_size() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    *width = s_window_size[0];
+    *height = s_window_size[1];
 }
 
 // -------------------------------------------------------------
@@ -526,9 +543,9 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
         return;
     }
 
-    // TODO this will render the outline with the line renderer
-    if (s_outline) {
-        fprintf(stderr, "[ERROR] cannot call canvash_rectangle_2D while in outline mode.\n");
+    // TODO this will render the outline (stroke) with the line renderer
+    if (s_stroke) {
+        fprintf(stderr, "[ERROR] cannot call canvash_rectangle_2D while in stroke mode.\n");
         return;
     }
 
@@ -605,9 +622,9 @@ void canvash_ellipse_2D(float *p, float a, float b) {
         return;
     }
 
-    // TODO this will render the outline with the line renderer
-    if (s_outline) {
-        fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while in outline mode.\n");
+    // TODO this will render the outline (stroke) with the line renderer
+    if (s_stroke) {
+        fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while in stroke mode.\n");
         return;
     }
 
@@ -665,6 +682,34 @@ void canvash_ellipse_2D(float *p, float a, float b) {
     }
 }
 
+void canvash_circle_2D(float *p, float r) {
+    // NOTE just like the ellipse but put safeguards before so that the correct function name is used in the error log
+
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_circle_2D() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
+        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
+        return;
+    }
+
+
+    if (s_mode == threedimensional) {
+        fprintf(stderr, "[ERROR] cannot call canvash_circle_2D while in threedimensional mode.\n");
+        return;
+    }
+
+    // TODO this will render the outline (stroke) with the line renderer
+    if (s_stroke) {
+        fprintf(stderr, "[ERROR] cannot call canvash_circle_2D while in stroke mode.\n");
+        return;
+    }
+
+    canvash_ellipse_2D(p, r, r);
+}
+
 void canvash_triangle_2D(float *p1, float *p2, float *p3) {
     if (!s_init) {
         fprintf(stderr, "[ERROR] can't call canvash_triangle_2D() without initialization first. call canvash_init() before doing anything else.\n");
@@ -681,9 +726,9 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
         return;
     }
 
-    // TODO this will render the outline with the line renderer
-    if (s_outline) {
-        fprintf(stderr, "[ERROR] cannot call canvash_triangle_2D while in outline mode.\n");
+    // TODO this will render the outline (stroke) with the line renderer
+    if (s_stroke) {
+        fprintf(stderr, "[ERROR] cannot call canvash_triangle_2D while in stroke mode.\n");
         return;
     }
 
@@ -767,6 +812,12 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
     }
 }
 
+void canvash_line_2D(float *p1, float *p2) {
+    // TODO
+}
+
+// -------------------------------------------------------------
+
 void canvash_rotate_2D(float rad) {
     if (!s_init) {
         fprintf(stderr, "[ERROR] can't call canvash_rotate_2D() without initialization first. call canvash_init() before doing anything else.\n");
@@ -776,60 +827,24 @@ void canvash_rotate_2D(float rad) {
     s_current_rotation_angle = rad;
 }
 
-void canvash_fill_color(vec4 color) {
+void canvash_scale_2D(float factor_x, float factor_y) {
     if (!s_init) {
-        fprintf(stderr, "[ERROR] can't call canvash_fill_color() without initialization first. call canvash_init() before doing anything else.\n");
+        fprintf(stderr, "[ERROR] can't call canvash_scale_2D() without initialization first. call canvash_init() before doing anything else.\n");
         return;
     }
 
-    s_fill = true;
-    glm_vec4_copy(color, s_fill_color);
+    s_current_scale[0] *= factor_x;
+    s_current_scale[1] *= factor_y;
 }
 
-void canvash_outline_color(vec4 color) {
+void canvash_translate_2D(float move_x, float move_y) {
     if (!s_init) {
-        fprintf(stderr, "[ERROR] can't call canvash_outline_color() without initialization first. call canvash_init() before doing anything else.\n");
+        fprintf(stderr, "[ERROR] can't call canvash_translate_2D() without initialization first. call canvash_init() before doing anything else.\n");
         return;
     }
 
-    s_outline = true;
-    glm_vec4_copy(color, s_outline_color);
-}
-
-void canvash_no_fill() {
-    if (!s_init) {
-        fprintf(stderr, "[ERROR] can't call canvash_no_fill() without initialization first. call canvash_init() before doing anything else.\n");
-        return;
-    }
-
-    s_fill = false;
-}
-
-void canvash_no_outline() {
-    if (!s_init) {
-        fprintf(stderr, "[ERROR] can't call canvash_no_outline() without initialization first. call canvash_init() before doing anything else.\n");
-        return;
-    }
-
-    s_outline = false;
-}
-
-void canvash_outline_size(float size) {
-    if (!s_init) {
-        fprintf(stderr, "[ERROR] can't call canvash_outline_size() without initialization first. call canvash_init() before doing anything else.\n");
-        return;
-    }
-
-    s_outline_size = size;
-}
-
-void canvash_background(float *background) {
-    if (!s_init) {
-        fprintf(stderr, "[ERROR] can't call canvash_background() without initialization first. call canvash_init() before doing anything else.\n");
-        return;
-    }
-
-    glm_vec3_copy(background, s_background);
+    s_current_translate[0] += move_x;
+    s_current_translate[1] += move_y;
 }
 
 void canvash_reset_transform_2D() {
@@ -844,6 +859,67 @@ void canvash_reset_transform_2D() {
     s_current_rotation_angle = 0.0f;
 }
 
+
+// -------------------------------------------------------------
+
+void canvash_fill_color(vec4 color) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_fill_color() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    s_fill = true;
+    glm_vec4_copy(color, s_fill_color);
+}
+
+void canvash_no_fill() {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_no_fill() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    s_fill = false;
+}
+
+void canvash_stroke_color(vec4 color) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_stroke_color() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    s_stroke = true;
+    glm_vec4_copy(color, s_stroke_color);
+}
+
+void canvash_no_stroke() {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_no_stroke() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    s_stroke = false;
+}
+
+void canvash_stroke(float strength) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_stroke() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    s_stroke_strength = strength;
+}
+
+// -------------------------------------------------------------
+
+void canvash_background(float *background) {
+    if (!s_init) {
+        fprintf(stderr, "[ERROR] can't call canvash_background() without initialization first. call canvash_init() before doing anything else.\n");
+        return;
+    }
+
+    glm_vec3_copy(background, s_background);
+}
+
 float canvash_time() {
     if (!s_init) {
         fprintf(stderr, "[ERROR] can't call canvash_time() without initialization first. call canvash_init() before doing anything else.\n");
@@ -851,37 +927,4 @@ float canvash_time() {
     }
 
     return (float) glfwGetTime() * 10.0f;
-}
-
-void canvash_circle_2D(float *p, float r) {
-    // NOTE just like the ellipse but put safeguards before so that the correct function name is used in the error log
-
-    if (!s_init) {
-        fprintf(stderr, "[ERROR] can't call canvash_circle_2D() without initialization first. call canvash_init() before doing anything else.\n");
-        return;
-    }
-
-    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
-        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
-        return;
-    }
-
-
-    if (s_mode == threedimensional) {
-        fprintf(stderr, "[ERROR] cannot call canvash_circle_2D while in threedimensional mode.\n");
-        return;
-    }
-
-    // TODO this will render the outline with the line renderer
-    if (s_outline) {
-        fprintf(stderr, "[ERROR] cannot call canvash_circle_2D while in outline mode.\n");
-        return;
-    }
-
-    canvash_ellipse_2D(p, r, r);
-}
-
-void canvash_get_window_size(float *width, float *height) {
-    *width = s_window_size[0];
-    *height = s_window_size[1];
 }

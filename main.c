@@ -29,9 +29,9 @@ int main() {
         canvash_clear_screen();
 
 
-        canvash_background((vec3){0.2f, 0.3f, (float)glfwGetTime()/20.0f});
+        canvash_background((vec3){0.2f, 0.3f, (float)canvash_time()/200.0f});
 
-        canvash_rotate_2D(glm_rad(45.0f + glfwGetTime()) * 10.10f);
+        canvash_rotate_2D(glm_rad(45.0f + canvash_time()));
 
         canvash_fill_color((vec4){0.3f, 0.2f, 0.6f, 1.0f});
         canvash_ellipse_2D((vec2){100.0f, 0.0f}, 400.0f, 10.0f);
