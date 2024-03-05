@@ -66,6 +66,8 @@ void canvash_no_stroke();
 
 void canvash_stroke(float strength);
 
+void canvash_no_stroke();
+
 // -------------------------------------------------------------
 
 void canvash_background(vec3 background);

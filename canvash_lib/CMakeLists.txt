@@ -11,6 +11,8 @@ configure_file(${PROJECT_SOURCE_DIR}/res/shader/ell_vert.glsl ${CMAKE_BINARY_DIR
 configure_file(${PROJECT_SOURCE_DIR}/res/shader/ell_frag.glsl ${CMAKE_BINARY_DIR}/res/shader/ell_frag.glsl COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/res/shader/tri_vert.glsl ${CMAKE_BINARY_DIR}/res/shader/tri_vert.glsl COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/res/shader/tri_frag.glsl ${CMAKE_BINARY_DIR}/res/shader/tri_frag.glsl COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/res/shader/line_vert.glsl ${CMAKE_BINARY_DIR}/res/shader/line_vert.glsl COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/res/shader/line_frag.glsl ${CMAKE_BINARY_DIR}/res/shader/line_frag.glsl COPYONLY)
 
 # Includes
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/lib/glad/include)
