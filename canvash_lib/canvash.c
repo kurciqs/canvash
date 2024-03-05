@@ -94,10 +94,15 @@ static GLuint s_triangle_vao;
 static int s_num_draw_lines = 0;
 static float *s_line_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
 static const size_t s_line_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
+// TODO expand the instance data to include the thickness
 static const size_t s_line_instance_data_num_floats = 4 * 4 + 4;
-static float s_line_object_data_vertices[4] = {
-        0.0f, 0.0f,
-        1.0f, 0.0f
+static float s_line_object_data_vertices[12] = {
+        0.0f, -0.5f,
+        0.5f, -0.5f,
+        0.5f, 0.5f,
+        0.0f, -0.5f,
+        0.0f, 0.5f,
+        0.5f, 0.5f,
 };
 static Shader s_line_shader;
 static GLuint s_line_vbo;
@@ -458,10 +463,10 @@ void canvash_render() {
 
     if (s_line_instance_data && s_num_draw_lines) {
 
-        float line_object_data_vertices_new[6];
+        float line_object_data_vertices_new[18];
 
         int ind = 0;
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 6; i++) {
             line_object_data_vertices_new[i * 3 + 0] = s_line_object_data_vertices[ind++];
             line_object_data_vertices_new[i * 3 + 1] = s_line_object_data_vertices[ind++];
             line_object_data_vertices_new[i * 3 + 2] = 0;
@@ -501,7 +506,8 @@ void canvash_render() {
 
             shader_upload_m4(s_line_shader, "u_proj", s_proj);
 
-            glDrawArraysInstanced(GL_LINES, 0, 2, s_num_draw_lines);
+//            glDrawArraysInstanced(GL_LINES, 0, 2, s_num_draw_lines);
+            glDrawArraysInstanced(GL_TRIANGLES, 0, 6, s_num_draw_lines);
 
             deactivate_shader();
             glBindVertexArray(0);
@@ -945,18 +951,7 @@ void canvash_line_2D(float *p1, float *p2) {
             glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
 
         // NOTE line-specific rotation
-        vec3 v1 = {p2[0]-p1[0], p2[1]-p1[1], 0.0f}; // Example vector 1 (could be any direction)
-        vec3 v2 = {p2[0]-p1[0], 0.0f, 0.0f}; // Example vector 2 (could be any direction)
-
-//        float theta = glm_vec3_angle(v1, v2);
         float theta = atan2f(p2[1]-p1[1], p2[0]-p1[0]);
-//        if (p2[1] - p1[1] < 0.0f) {
-//            theta *= -1.0f;
-//            if (p2[0] - p1[0] < 0.0f) {
-//                theta += 2.0f * fabsf(theta) + CGLM_PI;
-//            }
-//        }
-
         glm_rotate(transform, theta, s_current_rotation);
 
         // NOTE will scale by the width and height and since the initial size is unitary this will translate into pixels on the screen
