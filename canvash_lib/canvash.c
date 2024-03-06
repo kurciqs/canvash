@@ -92,17 +92,16 @@ static GLuint s_triangle_vao;
 // -------------------------------------------------------------
 
 static int s_num_draw_lines = 0;
-static float *s_line_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
-static const size_t s_line_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
-// TODO expand the instance data to include the thickness
-static const size_t s_line_instance_data_num_floats = 4 * 4 + 4;
+static float *s_line_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col, float thickness */
+static const size_t s_line_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float) + sizeof(float);
+static const size_t s_line_instance_data_num_floats = 4 * 4 + 4 + 1;
 static float s_line_object_data_vertices[12] = {
         0.0f, -0.5f,
         0.5f, -0.5f,
         0.5f, 0.5f,
         0.0f, -0.5f,
         0.0f, 0.5f,
-        0.5f, 0.5f,
+        0.5f, 0.5f
 };
 static Shader s_line_shader;
 static GLuint s_line_vbo;
@@ -266,8 +265,9 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
     s_current_rotation_angle = 0.0f;
 
     glm_mat4_identity(s_proj);
-    glm_vec3_one(s_fill_color); // white
-    glm_vec3_zero(s_stroke_color); // black
+    glm_vec4_one(s_fill_color); // white
+    glm_vec4_zero(s_stroke_color); // black
+    s_stroke_color[3] = 1.0f;
     s_fill = true; // fill
     s_stroke_strength = 0.0f; // none
     s_background[0] = s_background[1] = s_background[2] = 0.5f; // gray
@@ -336,9 +336,9 @@ void canvash_render() {
             }
 
             // NOTE this is the color
-            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_rectangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
-            glEnableVertexAttribArray(4 + 1);
-            glVertexAttribDivisor(4 + 1, 1); // This also advances once per instance
+            glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_rectangle_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(5);
+            glVertexAttribDivisor(5, 1); // This also advances once per instance
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
@@ -396,9 +396,9 @@ void canvash_render() {
             }
 
             // NOTE this is the color
-            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_ellipse_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
-            glEnableVertexAttribArray(4 + 1);
-            glVertexAttribDivisor(4 + 1, 1); // This also advances once per instance
+            glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_ellipse_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(5);
+            glVertexAttribDivisor(5, 1); // This also advances once per instance
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
@@ -439,8 +439,8 @@ void canvash_render() {
             }
 
             // NOTE this is the color
-            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat) + 4 * 4 * sizeof(GLfloat) + 4 * sizeof(GLfloat), (void *) (sizeof(GLfloat) * 3 + 16 * sizeof(GLfloat)));
-            glEnableVertexAttribArray(4 + 1);
+            glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat) + 4 * 4 * sizeof(GLfloat) + 4 * sizeof(GLfloat), (void *) (sizeof(GLfloat) * 3 + 16 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(5);
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
@@ -482,7 +482,7 @@ void canvash_render() {
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *) 0);
             glEnableVertexAttribArray(0);
 
-            // NOTE this is different for each quad/rect
+            // NOTE this is different for each
             glBindBuffer(GL_ARRAY_BUFFER, s_line_instance_data_vbo);
             glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) s_line_instance_data_size * s_num_draw_lines, s_line_instance_data, GL_STATIC_DRAW);
 
@@ -494,9 +494,14 @@ void canvash_render() {
             }
 
             // NOTE this is the color
-            glVertexAttribPointer(4 + 1, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_line_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
-            glEnableVertexAttribArray(4 + 1);
-            glVertexAttribDivisor(4 + 1, 1); // This also advances once per instance
+            glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_line_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(5);
+            glVertexAttribDivisor(5, 1);
+
+            // NOTE this is the line thickness / stroke strength
+            glVertexAttribPointer(6, 1, GL_FLOAT, GL_FALSE, (GLsizei) (s_line_instance_data_num_floats * sizeof(GLfloat)), (void *) ((16 + 4) * sizeof(GLfloat)));
+            glEnableVertexAttribArray(6);
+            glVertexAttribDivisor(6, 1);
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
@@ -506,7 +511,6 @@ void canvash_render() {
 
             shader_upload_m4(s_line_shader, "u_proj", s_proj);
 
-//            glDrawArraysInstanced(GL_LINES, 0, 2, s_num_draw_lines);
             glDrawArraysInstanced(GL_TRIANGLES, 0, 6, s_num_draw_lines);
 
             deactivate_shader();
@@ -525,8 +529,9 @@ void canvash_render() {
     s_current_rotation_angle = 0.0f;
 
     glm_mat4_identity(s_proj);
-    glm_vec3_one(s_fill_color); // white
-    glm_vec3_zero(s_stroke_color); // black
+    glm_vec4_one(s_fill_color); // white
+    glm_vec4_zero(s_stroke_color); // black
+    s_stroke_color[3] = 1.0f;
     s_fill = true; // fill
     s_stroke_strength = 0.0f; // none
     s_num_objects = 0;
@@ -621,8 +626,10 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
 
     // TODO this will render the outline (stroke) with the line renderer
     if (s_stroke_strength != 0.0f) {
-        fprintf(stderr, "[ERROR] cannot call canvash_rectangle_2D while in stroke mode.\n");
-        return;
+        canvash_line_2D(p1, (vec2){p2[0], p1[1]});
+        canvash_line_2D((vec2){p2[0], p1[1]}, p2);
+        canvash_line_2D(p2, (vec2){p1[0], p2[1]});
+        canvash_line_2D((vec2){p1[0], p2[1]}, p1);
     }
 
     if (s_fill) {
@@ -692,7 +699,6 @@ void canvash_ellipse_2D(float *p, float a, float b) {
         return;
     }
 
-
     if (s_mode == threedimensional) {
         fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while in threedimensional mode.\n");
         return;
@@ -701,6 +707,7 @@ void canvash_ellipse_2D(float *p, float a, float b) {
     // TODO this will render the outline (stroke) with the line renderer
     if (s_stroke_strength != 0.0f) {
         fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while in stroke mode.\n");
+
         return;
     }
 
@@ -802,12 +809,6 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
         return;
     }
 
-    // TODO this will render the outline (stroke) with the line renderer
-    if (s_stroke_strength != 0.0f) {
-        fprintf(stderr, "[ERROR] cannot call canvash_triangle_2D while in stroke mode.\n");
-        return;
-    }
-
     // NOTE renders the fill mesh
     if (s_fill) {
         s_num_objects++;
@@ -887,6 +888,13 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
             }
         }
     }
+
+    // TODO this will render the outline (stroke) with the line renderer
+    if (s_stroke_strength != 0.0f) {
+        canvash_line_2D(p1, p2);
+        canvash_line_2D(p2, p3);
+        canvash_line_2D(p3, p1);
+    }
 }
 
 void canvash_line_2D(float *p1, float *p2) {
@@ -902,12 +910,6 @@ void canvash_line_2D(float *p1, float *p2) {
 
     if (s_mode == threedimensional) {
         fprintf(stderr, "[ERROR] cannot call canvash_line_2D while in threedimensional mode.\n");
-        return;
-    }
-
-    // TODO this will render the outline (stroke) with the line renderer
-    if (s_stroke_strength == 0.0f) {
-        fprintf(stderr, "[ERROR] cannot call canvash_line_2D while in not stroke mode.\n");
         return;
     }
 
@@ -937,7 +939,7 @@ void canvash_line_2D(float *p1, float *p2) {
         }
 
         // NOTE add the instance data
-        // NOTE 16 floats for transform matrix + 4 floats for color
+        // NOTE 16 floats for transform matrix + 4 floats for color + 1 for strength
 
         mat4 transform;
         glm_mat4_identity(transform);
@@ -945,7 +947,7 @@ void canvash_line_2D(float *p1, float *p2) {
         glm_translate(transform, (vec3) {0.0f, 0.0f, -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
 
         // NOTE line-specific translation
-        glm_translate(transform, p1);
+        glm_translate(transform, (vec3){p1[0], p1[1], 0.0f});
 
         if (s_current_rotation_angle != 0.0f)
             glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
@@ -964,6 +966,7 @@ void canvash_line_2D(float *p1, float *p2) {
         scale[2] = 1.0f;
         glm_scale(transform, scale);
 
+
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 s_line_instance_data[(s_num_draw_lines - 1) * s_line_instance_data_num_floats + i * 4 + j] = transform[i][j];
@@ -973,6 +976,9 @@ void canvash_line_2D(float *p1, float *p2) {
         for (int i = 0; i < 4; i++) {
             s_line_instance_data[(s_num_draw_lines - 1) * s_line_instance_data_num_floats + 16 + i] = s_stroke_color[i];
         }
+
+        s_line_instance_data[(s_num_draw_lines - 1) * s_line_instance_data_num_floats + 16 + 3 + 1] = s_stroke_strength;
+
     }
 }
 
