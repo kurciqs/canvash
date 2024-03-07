@@ -624,14 +624,6 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
         return;
     }
 
-    // TODO this will render the outline (stroke) with the line renderer
-    if (s_stroke_strength != 0.0f) {
-        canvash_line_2D(p1, (vec2){p2[0], p1[1]});
-        canvash_line_2D((vec2){p2[0], p1[1]}, p2);
-        canvash_line_2D(p2, (vec2){p1[0], p2[1]});
-        canvash_line_2D((vec2){p1[0], p2[1]}, p1);
-    }
-
     if (s_fill) {
         // NOTE renders the fill mesh
         s_num_objects++;
@@ -706,7 +698,7 @@ void canvash_ellipse_2D(float *p, float a, float b) {
 
     // TODO this will render the outline (stroke) with the line renderer
     if (s_stroke_strength != 0.0f) {
-        fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while in stroke mode.\n");
+        fprintf(stderr, "[TODO] cannot call canvash_ellipse_2D while in stroke mode.\n");
 
         return;
     }
@@ -786,7 +778,7 @@ void canvash_circle_2D(float *p, float r) {
 
     // TODO this will render the outline (stroke) with the line renderer
     if (s_stroke_strength != 0.0f) {
-        fprintf(stderr, "[ERROR] cannot call canvash_circle_2D while in stroke mode.\n");
+        fprintf(stderr, "[TODO] canvash_circle_2D in stroke mode.\n");
         return;
     }
 
@@ -888,13 +880,6 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
             }
         }
     }
-
-    // TODO this will render the outline (stroke) with the line renderer
-    if (s_stroke_strength != 0.0f) {
-        canvash_line_2D(p1, p2);
-        canvash_line_2D(p2, p3);
-        canvash_line_2D(p3, p1);
-    }
 }
 
 void canvash_line_2D(float *p1, float *p2) {
@@ -913,7 +898,6 @@ void canvash_line_2D(float *p1, float *p2) {
         return;
     }
 
-    // TODO line thickness (stroke strength)
     {
         // NOTE renders the fill mesh
         s_num_objects++;
