@@ -95,13 +95,21 @@ static int s_num_draw_lines = 0;
 static float *s_line_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col, float thickness */
 static const size_t s_line_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float) + sizeof(float);
 static const size_t s_line_instance_data_num_floats = 4 * 4 + 4 + 1;
+//static float s_line_object_data_vertices[12] = {
+//        -0.5f, -0.5f,
+//        0.5f, -0.5f,
+//       0.5f, 0.5f,
+//        -0.5f, -0.5f,
+//        -0.5f, 0.5f,
+//        0.5f, 0.5f
+//};
 static float s_line_object_data_vertices[12] = {
         0.0f, -0.5f,
-        0.5f, -0.5f,
-        0.5f, 0.5f,
+        1.0f, -0.5f,
+        1.0f, 0.5f,
         0.0f, -0.5f,
         0.0f, 0.5f,
-        0.5f, 0.5f
+        1.0f, 0.5f
 };
 static Shader s_line_shader;
 static GLuint s_line_vbo;
@@ -299,6 +307,7 @@ void canvash_render() {
         return;
     }
     glm_ortho(-s_window_size[0] / 2.0f, s_window_size[0] / 2.0f, -s_window_size[1] / 2.0f, s_window_size[1] / 2.0f, -1.0f, 1.0f, s_proj);
+//    glm_ortho(-s_window_size[0] / s_window_size[1], s_window_size[0] / s_window_size[1], -1.0f, 1.0f, -1.0f, 1.0f, s_proj);
 
     if (s_rectangle_instance_data && s_num_draw_rectangles) {
 
@@ -898,7 +907,7 @@ void canvash_line_2D(float *p1, float *p2) {
         return;
     }
 
-    {
+    if (1) {
         // NOTE renders the fill mesh
         s_num_objects++;
 
@@ -931,7 +940,16 @@ void canvash_line_2D(float *p1, float *p2) {
         glm_translate(transform, (vec3) {0.0f, 0.0f, -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
 
         // NOTE line-specific translation
-        glm_translate(transform, (vec3){p1[0], p1[1], 0.0f});
+        vec2 dir;
+        glm_vec2_sub(p2, p1, dir);
+        glm_vec2_normalize(dir);
+        vec2 translate;
+        glm_vec2_copy(p1, translate);
+        glm_vec2_scale(dir, s_stroke_strength / 2.0f, dir);
+        glm_vec2_sub(translate, dir, translate);
+
+        glm_translate(transform, (vec3){translate[0], translate[1], 0.0f});
+//        glm_translate(transform, (vec3){p1[0], p1[1], 0.0f});
 
         if (s_current_rotation_angle != 0.0f)
             glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
@@ -945,7 +963,8 @@ void canvash_line_2D(float *p1, float *p2) {
 
         // NOTE line-specific scale
         vec3 scale;
-        glm_vec3_fill(scale, glm_vec2_distance(p1, p2));
+        glm_vec3_fill(scale, glm_vec2_distance(p1, p2) + s_stroke_strength);
+//        glm_vec3_fill(scale, glm_vec2_distance(p1, p2));
         scale[1] = 1.0f;
         scale[2] = 1.0f;
         glm_scale(transform, scale);
@@ -962,7 +981,6 @@ void canvash_line_2D(float *p1, float *p2) {
         }
 
         s_line_instance_data[(s_num_draw_lines - 1) * s_line_instance_data_num_floats + 16 + 3 + 1] = s_stroke_strength;
-
     }
 }
 
