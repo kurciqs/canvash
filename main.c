@@ -30,28 +30,36 @@ int main() {
 
         canvash_background((vec3){0.2f, 0.3f, (float)canvash_time()/200.0f});
 
+
+        canvash_stroke_color((vec4){1.0f, 0.0f, 1.0f, 1.0f});
         canvash_fill_color((vec4){0.0f, 1.0f, 0.0f, 1.0f});
 
 //        canvash_rotate_2D(glm_rad(glfwGetTime()) * 20.10f);
-//        canvash_triangle_2D((vec2){-50.0f, 150.0f}, (vec2){250.0f, 150.0f}, (vec2){0.0f, 250.0f});
-//        canvash_fill_color((vec4){0.9f, 0.5f, 0.1f, 1.0f});
-//        canvash_rectangle_2D((vec2){-75.0f, -50.0f}, (vec2){75.0f, 50.0f});
 
-        canvash_stroke_color((vec4){0.0f, 1.0f, 1.0f, 1.0f});
+//        canvash_triangle_2D((vec2){-50.0f, 150.0f}, (vec2){0.0f, 200.0f}, (vec2){50.0f, 150.0f});
 
-//        canvash_line_2D((vec2){0.0f, 50.0f}, (vec2){300.0f, 0.0f});
+        canvash_fill_color((vec4){0.9f, 0.5f, 0.1f, 1.0f});
+
+//        canvash_rectangle_2D((vec2){-25.0f, 25.0f}, (vec2){25.0f, 75.0f});
+
 
         canvash_stroke(30.0f);
-        canvash_stroke_color((vec4){1.0f, 0.0f, 1.0f, 1.0f});
 
-        canvash_line_2D((vec2){0.0f, 0.0f}, (vec2){300.0f, 0.0f});
-
+//        canvash_circle_2D((vec2){100.0f, 0.0f}, 100.0f);
+//        canvash_circle_2D((vec2){-100.0f, 0.0f}, 100.0f);
+        // TODO fix circle outline not being correct width (should be in pixels)
+        // TODO also fix ellipse outline being janky af
+        canvash_circle_2D((vec2){0.0f, 0.0f}, 150.0f);
+//        canvash_line_2D((vec2){100.0f, -100.0f}, (vec2){100.0f, 100.0f});
+//        canvash_ellipse_2D((vec2){0.0f, 0.0f}, 100.0f, 200.0f);
         canvash_no_stroke();
-        canvash_circle_2D((vec2){0.0f, 0.0f}, 10.0f);
-        canvash_circle_2D((vec2){0.0f, 30.0f}, 5.0f);
 
-//        canvash_circle_2D((vec2){0.0f, 50.0f}, 10.0f);
-        canvash_circle_2D((vec2){300.0f, 0.0f}, 10.0f);
+        canvash_reset_transform_2D();
+
+        canvash_fill_color((vec4){0.1f, 0.1f, 0.1f, 1.0f});
+        canvash_circle_2D((vec2){0.0f, 0.0f}, 5.0f);
+        canvash_circle_2D((vec2){150.0f+15.0f, 0.0f}, 5.0f);
+        canvash_circle_2D((vec2){150.0f-15.0f, 0.0f}, 5.0f);
 
         // NOTE essential (do not leave out)
         canvash_render();

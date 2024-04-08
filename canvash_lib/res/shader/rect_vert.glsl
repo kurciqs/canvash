@@ -11,5 +11,5 @@ uniform mat4 u_proj;
 void main() {
     o_color = instance_color;
 
-    gl_Position = u_proj * (instance_model * vec4(a_pos.xyz, 1.0));
+    gl_Position = u_proj * (instance_model * vec4(a_pos, 1.0));
 }

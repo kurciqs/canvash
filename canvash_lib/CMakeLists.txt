@@ -9,6 +9,8 @@ configure_file(${PROJECT_SOURCE_DIR}/res/shader/rect_vert.glsl ${CMAKE_BINARY_DI
 configure_file(${PROJECT_SOURCE_DIR}/res/shader/rect_frag.glsl ${CMAKE_BINARY_DIR}/res/shader/rect_frag.glsl COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/res/shader/ell_vert.glsl ${CMAKE_BINARY_DIR}/res/shader/ell_vert.glsl COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/res/shader/ell_frag.glsl ${CMAKE_BINARY_DIR}/res/shader/ell_frag.glsl COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/res/shader/ell_ol_vert.glsl ${CMAKE_BINARY_DIR}/res/shader/ell_ol_vert.glsl COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/res/shader/ell_ol_frag.glsl ${CMAKE_BINARY_DIR}/res/shader/ell_ol_frag.glsl COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/res/shader/tri_vert.glsl ${CMAKE_BINARY_DIR}/res/shader/tri_vert.glsl COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/res/shader/tri_frag.glsl ${CMAKE_BINARY_DIR}/res/shader/tri_frag.glsl COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/res/shader/line_vert.glsl ${CMAKE_BINARY_DIR}/res/shader/line_vert.glsl COPYONLY)

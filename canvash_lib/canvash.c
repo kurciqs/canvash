@@ -39,9 +39,6 @@ static unsigned int s_num_objects = 0;
 
 //--------------------------------------------------------------
 
-// TODO fill will not work with instance data it has to be added to the line rendering (separate)
-// TODO gonna keep the color and the stroke color and filling as static variables like the transform
-// TODO fill without an stroke_color is not getting drawn
 static int s_num_draw_rectangles = 0;
 static float *s_rectangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
 static const size_t s_rectangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
@@ -79,6 +76,16 @@ static GLuint s_ellipse_vao;
 static GLuint s_ellipse_ebo;
 static GLuint s_ellipse_instance_data_vbo;
 
+static int s_num_draw_ellipse_outlines = 0;
+static float *s_ellipse_outline_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col, float width */
+static const size_t s_ellipse_outline_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float) + 1 * sizeof(float);
+static const size_t s_ellipse_outline_instance_data_num_floats = 4 * 4 + 4 + 1;
+static Shader s_ellipse_outline_shader;
+static GLuint s_ellipse_outline_vbo;
+static GLuint s_ellipse_outline_vao;
+static GLuint s_ellipse_outline_ebo;
+static GLuint s_ellipse_outline_instance_data_vbo;
+
 // -------------------------------------------------------------
 
 static int s_num_draw_triangles = 0;
@@ -91,18 +98,11 @@ static GLuint s_triangle_vao;
 
 // -------------------------------------------------------------
 
+// credit where credit is due: https://wwwtyro.net/2019/11/18/instanced-lines.html
 static int s_num_draw_lines = 0;
 static float *s_line_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col, float thickness */
 static const size_t s_line_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float) + sizeof(float);
 static const size_t s_line_instance_data_num_floats = 4 * 4 + 4 + 1;
-//static float s_line_object_data_vertices[12] = {
-//        -0.5f, -0.5f,
-//        0.5f, -0.5f,
-//       0.5f, 0.5f,
-//        -0.5f, -0.5f,
-//        -0.5f, 0.5f,
-//        0.5f, 0.5f
-//};
 static float s_line_object_data_vertices[12] = {
         0.0f, -0.5f,
         1.0f, -0.5f,
@@ -256,6 +256,12 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
     glGenBuffers(1, &s_ellipse_vbo);
     glGenBuffers(1, &s_ellipse_ebo);
     glGenBuffers(1, &s_ellipse_instance_data_vbo);
+
+    s_ellipse_outline_shader = create_shader("res/shader/ell_ol_vert.glsl", "res/shader/ell_ol_frag.glsl");
+    glGenVertexArrays(1, &s_ellipse_outline_vao);
+    glGenBuffers(1, &s_ellipse_outline_vbo);
+    glGenBuffers(1, &s_ellipse_outline_ebo);
+    glGenBuffers(1, &s_ellipse_outline_instance_data_vbo);
 
     s_triangle_shader = create_shader("res/shader/tri_vert.glsl", "res/shader/tri_frag.glsl");
     glGenVertexArrays(1, &s_triangle_vao);
@@ -416,6 +422,7 @@ void canvash_render() {
             glBindVertexArray(s_ellipse_vao);
 
             shader_upload_m4(s_ellipse_shader, "u_proj", s_proj);
+            shader_upload_v2(s_ellipse_shader, "u_screen_size", s_window_size);
 
             // glDrawArraysInstanced(GL_TRIANGLES, 0, 4, numInstances);
             glDrawElementsInstanced(GL_TRIANGLES, sizeof(s_ellipse_object_data_indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0, s_num_draw_ellipses);
@@ -427,6 +434,72 @@ void canvash_render() {
         free((void *) s_ellipse_instance_data);
         s_ellipse_instance_data = NULL;
         s_num_draw_ellipses = 0;
+    }
+
+    if (s_ellipse_outline_instance_data && s_num_draw_ellipse_outlines) {
+
+        float ellipse_outline_object_data_vertices_new[12];
+
+        int ind = 0;
+        for (int i = 0; i < 4; i++) {
+            ellipse_outline_object_data_vertices_new[i * 3 + 0] = s_ellipse_object_data_vertices[ind++];
+            ellipse_outline_object_data_vertices_new[i * 3 + 1] = s_ellipse_object_data_vertices[ind++];
+            ellipse_outline_object_data_vertices_new[i * 3 + 2] = 0;
+        }
+
+        {
+            glBindVertexArray(s_ellipse_outline_vao);
+
+            glBindBuffer(GL_ARRAY_BUFFER, s_ellipse_outline_vbo);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(ellipse_outline_object_data_vertices_new), ellipse_outline_object_data_vertices_new, GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_ellipse_outline_ebo);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(s_ellipse_object_data_indices), s_ellipse_object_data_indices, GL_STATIC_DRAW);
+
+            // NOTE this gives the position of the base quad vertices
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *) 0);
+            glEnableVertexAttribArray(0);
+
+            // NOTE this is different for each ellipse_outline
+            glBindBuffer(GL_ARRAY_BUFFER, s_ellipse_outline_instance_data_vbo);
+            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) s_ellipse_outline_instance_data_size * s_num_draw_ellipse_outlines, s_ellipse_outline_instance_data, GL_STATIC_DRAW);
+
+            // NOTE this is the model matrix
+            for (unsigned int i = 0; i < 4; i++) {
+                glVertexAttribPointer(1 + i, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_ellipse_outline_instance_data_num_floats * sizeof(GLfloat)), (void *) (sizeof(GLfloat) * i * 4));
+                glEnableVertexAttribArray(1 + i);
+                glVertexAttribDivisor(1 + i, 1);
+            }
+
+            // NOTE this is the color
+            glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, (GLsizei) (s_ellipse_outline_instance_data_num_floats * sizeof(GLfloat)), (void *) (16 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(5);
+            glVertexAttribDivisor(5, 1); // This also advances once per instance
+
+            // NOTE this is the stroke width
+            glVertexAttribPointer(6, 1, GL_FLOAT, GL_FALSE, (GLsizei) (s_ellipse_outline_instance_data_num_floats * sizeof(GLfloat)), (void *) (20 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(6);
+            glVertexAttribDivisor(6, 1);
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
+
+            activate_shader(s_ellipse_outline_shader);
+            glBindVertexArray(s_ellipse_outline_vao);
+
+            shader_upload_m4(s_ellipse_outline_shader, "u_proj", s_proj);
+            shader_upload_v2(s_ellipse_outline_shader, "u_screen_size", s_window_size);
+
+            // glDrawArraysInstanced(GL_TRIANGLES, 0, 4, numInstances);
+            glDrawElementsInstanced(GL_TRIANGLES, sizeof(s_ellipse_object_data_indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0, s_num_draw_ellipse_outlines);
+
+            deactivate_shader();
+            glBindVertexArray(0);
+        }
+
+        free((void *) s_ellipse_outline_instance_data);
+        s_ellipse_outline_instance_data = NULL;
+        s_num_draw_ellipse_outlines = 0;
     }
 
     if (s_triangle_object_data && s_num_draw_triangles) {
@@ -567,6 +640,12 @@ void canvash_terminate() {
     glDeleteBuffers(1, &s_ellipse_ebo);
     glDeleteBuffers(1, &s_ellipse_instance_data_vbo);
 
+    delete_shader(s_ellipse_outline_shader);
+    glDeleteVertexArrays(1, &s_ellipse_outline_vao);
+    glDeleteBuffers(1, &s_ellipse_outline_vbo);
+    glDeleteBuffers(1, &s_ellipse_outline_ebo);
+    glDeleteBuffers(1, &s_ellipse_outline_instance_data_vbo);
+
     delete_shader(s_triangle_shader);
     glDeleteVertexArrays(1, &s_triangle_vao);
     glDeleteBuffers(1, &s_triangle_vbo);
@@ -668,13 +747,16 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
         glm_vec2_scale(center, 0.5f, center);
 
         // NOTE z-indexing by changing the z translation (should work fine)
+
+        // NOTE this comes before translation since we WANT this to be rotated/scaled weirdly because we want it to rotate around (0,0), not it's center
+        glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
+        glm_scale(transform, s_current_scale);
+
         glm_translate(transform, (vec3) {center[0], center[1], -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
         glm_translate(transform, s_current_translate);
-        if (s_current_rotation_angle != 0.0f)
-            glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
+
         // NOTE will scale by the width and height and since the initial size is unitary this will translate into pixels on the screen
         glm_scale(transform, (vec3) {fabsf(p2[0] - p1[0]), fabsf(p2[1] - p1[1]), 1.0f});
-        glm_scale(transform, s_current_scale);
 
 
         for (int i = 0; i < 4; i++) {
@@ -686,6 +768,14 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
         for (int i = 0; i < 4; i++) {
             s_rectangle_instance_data[(s_num_draw_rectangles - 1) * s_rectangle_instance_data_num_floats + 16 + i] = s_fill_color[i];
         }
+    }
+
+    // NOTE renders the outline
+    if (s_stroke_strength != 0.0f) {
+        canvash_line_2D(p1, (vec2){p2[0], p1[1]});
+        canvash_line_2D((vec2){p2[0], p1[1]}, p2);
+        canvash_line_2D(p2, (vec2){p1[0], p2[1]});
+        canvash_line_2D((vec2){p1[0], p2[1]}, p1);
     }
 }
 
@@ -702,13 +792,6 @@ void canvash_ellipse_2D(float *p, float a, float b) {
 
     if (s_mode == threedimensional) {
         fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while in threedimensional mode.\n");
-        return;
-    }
-
-    // TODO this will render the outline (stroke) with the line renderer
-    if (s_stroke_strength != 0.0f) {
-        fprintf(stderr, "[TODO] cannot call canvash_ellipse_2D while in stroke mode.\n");
-
         return;
     }
 
@@ -745,13 +828,14 @@ void canvash_ellipse_2D(float *p, float a, float b) {
         vec2 center;
         glm_vec2_copy(p, center);
 
+        // NOTE this comes before translation since we WANT this to be rotated/scaled weirdly because we want it to rotate around (0,0), not it's center
+        glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
+        glm_scale(transform, s_current_scale);
+
         glm_translate(transform, (vec3) {center[0], center[1], -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
         glm_translate(transform, s_current_translate);
-        if (s_current_rotation_angle != 0.0f)
-            glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
         // NOTE will scale by the r1 and r2 and since the initial size is unitary this will translate into pixels on the screen
         glm_scale(transform, (vec3) {a, b, 1.0f});
-        glm_scale(transform, s_current_scale);
 
 
         for (int i = 0; i < 4; i++) {
@@ -763,6 +847,62 @@ void canvash_ellipse_2D(float *p, float a, float b) {
         for (int i = 0; i < 4; i++) {
             s_ellipse_instance_data[(s_num_draw_ellipses - 1) * s_ellipse_instance_data_num_floats + 16 + i] = s_fill_color[i];
         }
+    }
+
+    // TODO this will render the outline (stroke)
+    if (s_stroke_strength != 0.0f) {
+        s_num_objects++;
+
+        // NOTE resize the current instance data to fit with the added ellipse_outline
+        s_num_draw_ellipse_outlines++;
+        if (!s_ellipse_outline_instance_data && !s_num_draw_ellipse_outlines) {
+            s_ellipse_outline_instance_data = (float *) malloc(s_ellipse_outline_instance_data_size * s_num_draw_ellipse_outlines);
+            if (s_ellipse_outline_instance_data == NULL) {
+                fprintf(stderr, "[ERROR] failed to allocate any ellipse_outline instance data.\n");
+                s_num_draw_ellipse_outlines--;
+                return;
+            }
+        } else {
+            float *new_ellipse_outline_instance_data = (float *) realloc(s_ellipse_outline_instance_data, s_ellipse_outline_instance_data_size * s_num_draw_ellipse_outlines);
+            if (new_ellipse_outline_instance_data == NULL) {
+                fprintf(stderr, "[ERROR] failed to reallocate new ellipse_outline instance data.\n");
+                s_num_draw_ellipse_outlines--;
+                return;
+            } else {
+                s_ellipse_outline_instance_data = new_ellipse_outline_instance_data;
+            }
+        }
+
+        // NOTE add the instance data
+        // NOTE 16 floats for transform matrix + 4 floats for color
+
+        mat4 transform;
+        glm_mat4_identity(transform);
+
+        vec2 center;
+        glm_vec2_copy(p, center);
+
+        // NOTE this comes before translation since we WANT this to be rotated/scaled weirdly because we want it to rotate around (0,0), not it's center
+        glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
+        glm_scale(transform, s_current_scale);
+
+        glm_translate(transform, (vec3) {center[0], center[1], -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
+        glm_translate(transform, s_current_translate);
+        // NOTE will scale by the r1 and r2 and since the initial size is unitary this will translate into pixels on the screen
+        glm_scale(transform, (vec3) {a, b, 1.0f});
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                s_ellipse_outline_instance_data[(s_num_draw_ellipse_outlines - 1) * s_ellipse_outline_instance_data_num_floats + i * 4 + j] = transform[i][j];
+            }
+        }
+
+        for (int i = 0; i < 4; i++) {
+            s_ellipse_outline_instance_data[(s_num_draw_ellipse_outlines - 1) * s_ellipse_outline_instance_data_num_floats + 16 + i] = s_stroke_color[i];
+        }
+
+        // NOTE stroke strength goes to the gpu as well (scaled)
+        s_ellipse_outline_instance_data[(s_num_draw_ellipse_outlines - 1) * s_ellipse_outline_instance_data_num_floats + 16 + 4] = 2.0f * s_stroke_strength / s_window_size[0];
     }
 }
 
@@ -779,19 +919,12 @@ void canvash_circle_2D(float *p, float r) {
         return;
     }
 
-
     if (s_mode == threedimensional) {
         fprintf(stderr, "[ERROR] cannot call canvash_circle_2D while in threedimensional mode.\n");
         return;
     }
 
-    // TODO this will render the outline (stroke) with the line renderer
-    if (s_stroke_strength != 0.0f) {
-        fprintf(stderr, "[TODO] canvash_circle_2D in stroke mode.\n");
-        return;
-    }
-
-    canvash_ellipse_2D(p, r, r);
+    canvash_ellipse_2D(p, 2.0f*r, 2.0f*r);
 }
 
 void canvash_triangle_2D(float *p1, float *p2, float *p3) {
@@ -889,6 +1022,13 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
             }
         }
     }
+
+    // NOTE renders the outlines
+    if (s_stroke_strength != 0.0f) {
+        canvash_line_2D(p1, p2);
+        canvash_line_2D(p2, p3);
+        canvash_line_2D(p3, p1);
+    }
 }
 
 void canvash_line_2D(float *p1, float *p2) {
@@ -907,7 +1047,22 @@ void canvash_line_2D(float *p1, float *p2) {
         return;
     }
 
-    if (1) {
+    // NOTE these are the caps, it's primitive... but... the grass also doesn't look very pink to me... so yes...
+    {
+        float stroke_strength = s_stroke_strength;
+        s_stroke_strength = 0.0f;
+        vec3 fill;
+        glm_vec3_copy(s_fill_color, fill);
+        glm_vec3_copy(s_stroke_color, s_fill_color);
+
+        canvash_circle_2D(p1, stroke_strength / 2.0f);
+        canvash_circle_2D(p2, stroke_strength / 2.0f);
+
+        glm_vec3_copy(fill, s_fill_color);
+        s_stroke_strength = stroke_strength;
+    }
+
+    {
         // NOTE renders the fill mesh
         s_num_objects++;
 
@@ -933,9 +1088,12 @@ void canvash_line_2D(float *p1, float *p2) {
 
         // NOTE add the instance data
         // NOTE 16 floats for transform matrix + 4 floats for color + 1 for strength
-
         mat4 transform;
         glm_mat4_identity(transform);
+
+        glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
+        glm_scale(transform, s_current_scale);
+
         glm_translate(transform, s_current_translate);
         glm_translate(transform, (vec3) {0.0f, 0.0f, -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
 
@@ -943,32 +1101,20 @@ void canvash_line_2D(float *p1, float *p2) {
         vec2 dir;
         glm_vec2_sub(p2, p1, dir);
         glm_vec2_normalize(dir);
-        vec2 translate;
-        glm_vec2_copy(p1, translate);
-        glm_vec2_scale(dir, s_stroke_strength / 2.0f, dir);
-        glm_vec2_sub(translate, dir, translate);
 
-        glm_translate(transform, (vec3){translate[0], translate[1], 0.0f});
-//        glm_translate(transform, (vec3){p1[0], p1[1], 0.0f});
-
-        if (s_current_rotation_angle != 0.0f)
-            glm_rotate(transform, s_current_rotation_angle, s_current_rotation);
+        glm_translate(transform, (vec3){p1[0], p1[1], 0.0f});
 
         // NOTE line-specific rotation
         float theta = atan2f(p2[1]-p1[1], p2[0]-p1[0]);
         glm_rotate(transform, theta, s_current_rotation);
 
         // NOTE will scale by the width and height and since the initial size is unitary this will translate into pixels on the screen
-        glm_scale(transform, s_current_scale);
-
         // NOTE line-specific scale
         vec3 scale;
-        glm_vec3_fill(scale, glm_vec2_distance(p1, p2) + s_stroke_strength);
-//        glm_vec3_fill(scale, glm_vec2_distance(p1, p2));
+        glm_vec3_fill(scale, glm_vec2_distance(p1, p2));
         scale[1] = 1.0f;
         scale[2] = 1.0f;
         glm_scale(transform, scale);
-
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
