@@ -21,47 +21,31 @@ int main() {
     }
     canvash_set_key_callback(key_callback);
     canvash_set_mouse_callback(mouse_callback);
-    canvash_background((vec3){0.2f, 0.3f, 0.3f});
+
+    vec2 pos = {0.0f, 0.0f};
+    vec2 vel = {0.0f, 0.0f};
+    vec2 acc = {0.0f, 0.0f};
 
     // NOTE this is your main loop, it's like the draw() function in p5.js
     while (canvash_running()) {
         // NOTE essential (do not leave out)
         canvash_clear_screen();
-
         canvash_background((vec3){0.2f, 0.3f, canvash_time()/200.0f});
 
-        canvash_stroke(15.0f);
+        canvash_stroke(10.0f);
+        canvash_stroke_color((vec4){0.5f, 0.5f, 0.5f, 1.0f});
+        canvash_line_2D((vec2){-400.0f, -300.0f}, (vec2){400.0f, -300.0f});
 
-        canvash_stroke_color((vec4){1.0f, 0.0f, 1.0f, 1.0f});
+        if (pos[1] < -300) glm_vec2_scale(vel, -1.0f, vel);
 
-        canvash_fill_color((vec4){0.0f, 1.0f, 0.0f, 1.0f});
-
-        canvash_rotate_2D(glm_rad(canvash_time() * 5.0f));
-
-        canvash_stroke_color((vec4){0.0f, 0.0f, 0.0f, 1.0f});
-
-        canvash_triangle_2D((vec2){-50.0f, 150.0f}, (vec2){0.0f, 200.0f}, (vec2){50.0f, 150.0f});
-
-        canvash_fill_color((vec4){0.9f, 0.5f, 0.1f, 1.0f});
-
-        canvash_stroke_color((vec4){0.0f, 0.0f, 1.0f, 1.0f});
-
-        canvash_rectangle_2D((vec2){-25.0f, 25.0f}, (vec2){25.0f, 75.0f});
-
-
-        canvash_stroke_color((vec4){1.0f, 1.0f, 1.0f, 1.0f});
-
-        canvash_circle_2D((vec2){-168.0f, 0.0f}, 100.0f);
-        canvash_line_2D((vec2){100.0f, -100.0f}, (vec2){100.0f, 100.0f});
+        glm_vec2_copy((vec2){0.0f, -0.98f}, acc);
+        glm_vec2_add(vel, acc, vel);
+        glm_vec2_add(pos, vel, pos);
+        glm_vec2_zero(acc);
 
         canvash_no_stroke();
-
-        canvash_reset_transform_2D();
-
-        canvash_fill_color((vec4){0.1f, 0.1f, 0.1f, 1.0f});
-        canvash_circle_2D((vec2){0.0f, 0.0f}, 5.0f);
-        canvash_circle_2D((vec2){150.0f+15.0f, 0.0f}, 5.0f);
-        canvash_circle_2D((vec2){150.0f-15.0f, 0.0f}, 5.0f);
+        canvash_fill_color((vec4){1.0f, 0.0f, 0.0f, 1.0f});
+        canvash_circle_2D(pos, 25.0f);
 
         // NOTE essential (do not leave out)
         canvash_render();

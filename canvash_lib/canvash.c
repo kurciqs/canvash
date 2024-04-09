@@ -283,7 +283,7 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
     glm_vec4_zero(s_stroke_color); // black
     s_stroke_color[3] = 1.0f;
     s_fill = true; // fill
-    s_stroke_strength = 0.0f; // none
+    s_stroke_strength = 5.0f; // none
     s_background[0] = s_background[1] = s_background[2] = 0.5f; // gray
 
     s_init = 1;
@@ -619,7 +619,7 @@ void canvash_render() {
     glm_vec4_zero(s_stroke_color); // black
     s_stroke_color[3] = 1.0f;
     s_fill = true; // fill
-    s_stroke_strength = 0.0f; // none
+    s_stroke_strength = 5.0f; // none
     s_num_objects = 0;
 
     glfwSwapBuffers(s_window);
@@ -1074,6 +1074,11 @@ void canvash_line_2D(float *p1, float *p2) {
 
     if (s_mode == threedimensional) {
         fprintf(stderr, "[ERROR] cannot call canvash_line_2D while in threedimensional mode.\n");
+        return;
+    }
+
+    if (s_stroke_strength == 0.0f) {
+        fprintf(stderr, "[ERROR] cannot call canvash_line_2D while stroke_strength is zero.\n");
         return;
     }
 
