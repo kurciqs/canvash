@@ -77,9 +77,9 @@ static GLuint s_ellipse_ebo;
 static GLuint s_ellipse_instance_data_vbo;
 
 static int s_num_draw_ellipse_outlines = 0;
-static float *s_ellipse_outline_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col, float width */
-static const size_t s_ellipse_outline_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float) + 1 * sizeof(float);
-static const size_t s_ellipse_outline_instance_data_num_floats = 4 * 4 + 4 + 1;
+static float *s_ellipse_outline_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col, float width, vec2 size */
+static const size_t s_ellipse_outline_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float) + 1 * sizeof(float) + 2 * sizeof(float);
+static const size_t s_ellipse_outline_instance_data_num_floats = 4 * 4 + 4 + 1 + 2;
 static Shader s_ellipse_outline_shader;
 static GLuint s_ellipse_outline_vbo;
 static GLuint s_ellipse_outline_vao;
@@ -481,6 +481,10 @@ void canvash_render() {
             glEnableVertexAttribArray(6);
             glVertexAttribDivisor(6, 1);
 
+            glVertexAttribPointer(7, 2, GL_FLOAT, GL_FALSE, (GLsizei) (s_ellipse_outline_instance_data_num_floats * sizeof(GLfloat)), (void *) (21 * sizeof(GLfloat)));
+            glEnableVertexAttribArray(7);
+            glVertexAttribDivisor(7, 1);
+
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
 
@@ -795,6 +799,12 @@ void canvash_ellipse_2D(float *p, float a, float b) {
         return;
     }
 
+    // NOTE this wouldn't make sense anyway and it causes problems with the ellipse outline
+    if (s_stroke_strength / 2.0f > a || s_stroke_strength / 2.0f > b) {
+        fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while half of stroke_strength is larger or equal to the radii of the ellipse (a = %f, b = %f, stroke = %f).\n", a, b, s_stroke_strength);
+        return;
+    }
+
     if (s_fill) {
         // NOTE renders the fill mesh
         s_num_objects++;
@@ -834,9 +844,8 @@ void canvash_ellipse_2D(float *p, float a, float b) {
 
         glm_translate(transform, (vec3) {center[0], center[1], -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
         glm_translate(transform, s_current_translate);
-        // NOTE will scale by the r1 and r2 and since the initial size is unitary this will translate into pixels on the screen
-        glm_scale(transform, (vec3) {a, b, 1.0f});
-
+        // NOTE will scale by the r1 and r2 (times 2 because of diameter / radius clarity - all of this is in radii) and since the initial size is unitary this will translate into pixels on the screen
+        glm_scale(transform, (vec3) {2.0f*a, 2.0f*b, 1.0f});
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -849,7 +858,6 @@ void canvash_ellipse_2D(float *p, float a, float b) {
         }
     }
 
-    // TODO this will render the outline (stroke)
     if (s_stroke_strength != 0.0f) {
         s_num_objects++;
 
@@ -888,8 +896,11 @@ void canvash_ellipse_2D(float *p, float a, float b) {
 
         glm_translate(transform, (vec3) {center[0], center[1], -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
         glm_translate(transform, s_current_translate);
-        // NOTE will scale by the r1 and r2 and since the initial size is unitary this will translate into pixels on the screen
-        glm_scale(transform, (vec3) {a, b, 1.0f});
+        // NOTE interesting condition that works for the ellipse outline sdf in the fragment shader
+        if (a > b)
+        glm_scale(transform, (vec3) {2.0f*a, 2.0f*a, 1.0f});
+        else
+        glm_scale(transform, (vec3) {2.0f*b, 2.0f*b, 1.0f});
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -901,8 +912,10 @@ void canvash_ellipse_2D(float *p, float a, float b) {
             s_ellipse_outline_instance_data[(s_num_draw_ellipse_outlines - 1) * s_ellipse_outline_instance_data_num_floats + 16 + i] = s_stroke_color[i];
         }
 
-        // NOTE stroke strength goes to the gpu as well (scaled)
-        s_ellipse_outline_instance_data[(s_num_draw_ellipse_outlines - 1) * s_ellipse_outline_instance_data_num_floats + 16 + 4] = 2.0f * s_stroke_strength / s_window_size[0];
+        // NOTE stroke strength goes to the gpu as well as the ellipse dimensions
+        s_ellipse_outline_instance_data[(s_num_draw_ellipse_outlines - 1) * s_ellipse_outline_instance_data_num_floats + 16 + 4 + 0] = s_stroke_strength;
+        s_ellipse_outline_instance_data[(s_num_draw_ellipse_outlines - 1) * s_ellipse_outline_instance_data_num_floats + 16 + 5 + 0] = 2.0f*a;
+        s_ellipse_outline_instance_data[(s_num_draw_ellipse_outlines - 1) * s_ellipse_outline_instance_data_num_floats + 16 + 5 + 1] = 2.0f*b;
     }
 }
 
@@ -924,7 +937,13 @@ void canvash_circle_2D(float *p, float r) {
         return;
     }
 
-    canvash_ellipse_2D(p, 2.0f*r, 2.0f*r);
+    // NOTE this wouldn't make sense anyway and it causes problems with the ellipse outline
+    if (s_stroke_strength / 2.0f > r) {
+        fprintf(stderr, "[ERROR] cannot call canvash_circle_2D while half of stroke_strength is larger or equal to the radius (r = %f, stroke = %f).\n", r, s_stroke_strength);
+        return;
+    }
+
+    canvash_ellipse_2D(p, r, r);
 }
 
 void canvash_triangle_2D(float *p1, float *p2, float *p3) {
