@@ -8,7 +8,7 @@ layout(location = 7) in vec2 instance_size; // Instance data - dimensions of the
 
 out vec4 o_color;
 out vec3 v_pos; // original vertex position, unitary
-out vec2 i_size; // original vertex position, unitary
+out vec2 i_size;
 out float i_stroke;
 uniform mat4 u_proj;
 uniform vec2 u_screen_size;

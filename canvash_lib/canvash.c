@@ -799,6 +799,11 @@ void canvash_ellipse_2D(float *p, float a, float b) {
         return;
     }
 
+    if (a <= 0.0f || b <= 0.0f) {
+        fprintf(stderr, "[ERROR] stop trying to be funny, an ellipse cannot have negative radii (a = %f, b = %f).\n", a, b);
+        return;
+    }
+
     // NOTE this wouldn't make sense anyway and it causes problems with the ellipse outline
     if (s_stroke_strength / 2.0f > a || s_stroke_strength / 2.0f > b) {
         fprintf(stderr, "[ERROR] cannot call canvash_ellipse_2D while half of stroke_strength is larger or equal to the radii of the ellipse (a = %f, b = %f, stroke = %f).\n", a, b, s_stroke_strength);
@@ -896,7 +901,8 @@ void canvash_ellipse_2D(float *p, float a, float b) {
 
         glm_translate(transform, (vec3) {center[0], center[1], -1.0f + (float) s_num_objects / (float) CANVASH_MAX_OBJECTS});
         glm_translate(transform, s_current_translate);
-        // NOTE interesting condition that works for the ellipse outline sdf in the fragment shader
+
+        // NOTE an interesting condition that works for the ellipse outline sdf in the fragment shader
         if (a > b)
         glm_scale(transform, (vec3) {2.0f*a, 2.0f*a, 1.0f});
         else
@@ -934,6 +940,11 @@ void canvash_circle_2D(float *p, float r) {
 
     if (s_mode == threedimensional) {
         fprintf(stderr, "[ERROR] cannot call canvash_circle_2D while in threedimensional mode.\n");
+        return;
+    }
+
+    if (r <= 0.0f) {
+        fprintf(stderr, "[ERROR] stop trying to be funny, an ellipse cannot have a negative radius (r = %f).\n", r);
         return;
     }
 

@@ -2,11 +2,12 @@
 out vec4 FragColor;
 
 in vec4 o_color;
-in vec3 v_pos; // original vertex position, unitary
+in vec3 v_pos;
 in float i_stroke;
-in vec2 i_size; // original vertex position, unitary
+in vec2 i_size;
 uniform vec2 u_screen_size;
 
+// https://iquilezles.org/articles/distfunctions2d/ - best source for sdfs EVER
 float sdEllipse( in vec2 p, in vec2 ab )
 {
     if (ab.x == ab.y) ab.x += 0.001; // otherwise division by zero, nobody will mind this "impurity"
@@ -46,10 +47,10 @@ void main()
 {
     float dist = distance(vec2(0,0), v_pos.xy);
     vec2 es = i_size;
-    float factor = max(es.x, es.y);
-    float stroke = (i_stroke / 2.0) * (1.0 / factor);
-    float d = sdEllipse(v_pos.xy, 0.5 * es / factor);
-    if (d < -stroke || d > stroke) {
+    float factor = max(es.x, es.y) * 2.0; // not exactly sure why this factor but i established it using experimental observation (i guessed it)
+    float stroke = i_stroke / factor;
+    float d = sdEllipse(v_pos.xy, es / factor);
+    if (abs(d) > stroke) {
         discard;
     }
     else {
