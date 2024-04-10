@@ -1,44 +1,46 @@
 #include "canvash.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-
 #include "lib/stb/include/stb_image.h"
 
 // -------------------------------------------------------------
 
+// NOTE glfw and window variables
 static GLFWwindow *s_window;
 static vec2 s_window_size;
 static vec2 s_old_window_size;
 static vec2 s_old_window_pos;
 static int s_fullscreen = 0;
-
 static void (*s_key_callback)(int, int, int); // key_callback(int key, int scancode, int action)
 static void (*s_mouse_callback)(int, int, float, float); // mouse_callback(int button, int action, float xpos, float ypos)
 
 // -------------------------------------------------------------
 
+// NOTE general engine settings
 static CanvashMode s_mode;
 static int s_init = 0;
 
-// NOTE have this be defined by like a CURRENT transform variable give by the user with rotate() etc and make it revertable
+// NOTE global transform
 static vec3 s_current_translate;
 static vec3 s_current_rotation;
 static vec3 s_current_scale;
 static float s_current_rotation_angle;
 
+// NOTE drawing style
 static vec4 s_fill_color;
 static bool s_fill;
-// NOTE outlines (strokes) are explicitly rendered with lines except in the case of ellipses
 static vec4 s_stroke_color;
 static float s_stroke_strength;
-//static bool s_stroke;
 static vec3 s_background;
+
+// NOTE rendering variables
 //static mat4 s_view; // 3D mode
 static mat4 s_proj;
 static unsigned int s_num_objects = 0;
 
 //--------------------------------------------------------------
 
+// NOTE rectangle drawing variables
 static int s_num_draw_rectangles = 0;
 static float *s_rectangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
 static const size_t s_rectangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
