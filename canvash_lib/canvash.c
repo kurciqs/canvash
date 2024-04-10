@@ -20,7 +20,7 @@ static void (*s_mouse_callback)(int, int, float, float); // mouse_callback(int b
 static CanvashMode s_mode;
 static int s_init = 0;
 
-// NOTE global transform
+// NOTE global transform, passed to each object in its instance data
 static vec3 s_current_translate;
 static vec3 s_current_rotation;
 static vec3 s_current_scale;
@@ -41,8 +41,11 @@ static unsigned int s_num_objects = 0;
 //--------------------------------------------------------------
 
 // NOTE rectangle drawing variables
+// NOTE rectangles are all instanced, meaning one square is rendered every time and each of them has it's own transform
+// NOTE scale to match given width and height
+// NOTE translate to match corner coordinates
 static int s_num_draw_rectangles = 0;
-static float *s_rectangle_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
+static float *s_rectangle_instance_data; // mat4x4 transform, vec4 col
 static const size_t s_rectangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
 static const size_t s_rectangle_instance_data_num_floats = 4 * 4 + 4;
 static float s_rectangle_object_data_vertices[8] = {
