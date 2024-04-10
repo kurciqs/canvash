@@ -218,6 +218,7 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_SAMPLES, 8);
 //    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwSetErrorCallback(glfw_error_callback);
 
@@ -238,7 +239,10 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
     glViewport(0, 0, app_width, app_height);
     s_window_size[0] = (float) app_width;
     s_window_size[1] = (float) app_height;
+
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);
+
     glfwSetFramebufferSizeCallback(s_window, glfw_framebuffer_size_callback);
     if (glDebugMessageCallback) {
         glEnable(GL_DEBUG_OUTPUT);
@@ -722,6 +726,13 @@ void canvash_get_window_size(float *width, float *height) {
     *height = s_window_size[1];
 }
 
+void canvash_get_mouse_position(float *x, float *y) {
+    glfwGetCursorPos(s_window, (double*)x, (double*)y);
+}
+
+bool canvash_is_button_pressed(int button) {
+    return glfwGetMouseButton(s_window, button) == GLFW_PRESS;
+}
 // -------------------------------------------------------------
 
 void canvash_rectangle_2D(vec2 p1, vec2 p2) {

@@ -1,16 +1,38 @@
 #include "canvash_lib/canvash.h"
 
-// NOTE this is a simple key callback function, modify it to your liking
-void key_callback(int key, int scancode, int action) {
-    if (CANVASH_KEY_IS_PRESSED(key, action, CANVASH_KEY_E)) {
-        printf("Hewwo, key callback work!\n");
-    }
+typedef struct {
+    vec2 pos;
+    vec2 vel;
+    vec2 acc;
+    float mass;
+    vec4 color;
+} Mover;
+
+void apply_force_mover(Mover* mover, vec2 force) {
+    vec2 f;
+    glm_vec2_copy(force, f);
+    glm_vec2_scale(f, 1.0f/mover->mass, f);
+    glm_vec2_add(mover->acc, f, mover->acc);
 }
-// NOTE this is a simple mouse callback function, modify it to your liking
-void mouse_callback(int button, int action, float xpos, float ypos) {
-    if (CANVASH_BUTTON_IS_PRESSED(button, action, CANVASH_MOUSE_BUTTON_LEFT)) {
-        printf("Hewwo, mouse callback work at %f %f!\n", xpos, ypos);
-    }
+
+void update_mover(Mover* mover) {
+    // NOTE gravity
+    vec2 g = {0.0f, -9.8f};
+    apply_force_mover(mover, g);
+
+    // TODO boundary collision detection
+
+    glm_vec2_add(mover->vel, mover->acc, mover->vel);
+    glm_vec2_add(mover->pos, mover->vel, mover->pos);
+    glm_vec2_zero(mover->acc);
+}
+
+void draw_mover(Mover* mover) {
+//    canvash_no_stroke();
+    canvash_stroke_color((vec4){0.0f, 0.0f, 0.0f, 1.0f});
+    canvash_stroke(5.0f);
+    canvash_fill_color(mover->color);
+    canvash_circle_2D(mover->pos, mover->mass);
 }
 
 int main() {
@@ -19,12 +41,24 @@ int main() {
         printf("[USER] failed initialization.\n");
         return -1;
     }
-    canvash_set_key_callback(key_callback);
-    canvash_set_mouse_callback(mouse_callback);
 
-    vec2 pos = {0.0f, 0.0f};
-    vec2 vel = {0.0f, 0.0f};
-    vec2 acc = {0.0f, 0.0f};
+    int num_movers = 10;
+    Mover* movers = (Mover*) malloc(sizeof(Mover) * num_movers);
+    for (int i = 0; i < num_movers; i++) {
+        Mover* mover = &movers[i];
+        vec2 screen_size;
+        canvash_get_window_size(&screen_size[0], &screen_size[1]);
+        mover->pos[0] = rand() % (int)(screen_size[0]/2.0f) - rand() % (int)(screen_size[0]/2.0f);
+        mover->pos[1] = rand() % (int)(screen_size[1]/2.0f) - rand() % (int)(screen_size[1]/2.0f);
+        mover->vel[0] = 0.0f;
+        mover->vel[1] = 0.0f;
+        mover->mass = rand() % 25 + 25;
+        glm_vec2_zero(mover->acc);
+        mover->color[0] = (float)(rand() % 255) / 255.0f;
+        mover->color[1] = (float)(rand() % 255) / 255.0f;
+        mover->color[2] = (float)(rand() % 255) / 255.0f;
+        mover->color[3] = 1.0f;
+    }
 
     // NOTE this is your main loop, it's like the draw() function in p5.js
     while (canvash_running()) {
@@ -32,21 +66,11 @@ int main() {
         canvash_clear_screen();
         canvash_background((vec3){0.2f, 0.3f, canvash_time()/200.0f});
 
-        canvash_stroke(10.0f);
-        canvash_stroke_color((vec4){0.5f, 0.5f, 0.5f, 1.0f});
-        canvash_line_2D((vec2){-400.0f, -300.0f}, (vec2){400.0f, -300.0f});
-
-        if (pos[1] < -300) glm_vec2_scale(vel, -1.0f, vel);
-
-        glm_vec2_copy((vec2){0.0f, -0.98f}, acc);
-        glm_vec2_add(vel, acc, vel);
-        glm_vec2_add(pos, vel, pos);
-        glm_vec2_zero(acc);
-
-        canvash_no_stroke();
-        canvash_fill_color((vec4){1.0f, 0.0f, 0.0f, 1.0f});
-        canvash_circle_2D(pos, 25.0f);
-
+        for (int i = 0; i < num_movers; i++) {
+            Mover* mover = &movers[i];
+            update_mover(mover);
+            draw_mover(mover);
+        }
         // NOTE essential (do not leave out)
         canvash_render();
     }

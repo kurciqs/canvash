@@ -32,6 +32,10 @@ void canvash_set_mouse_callback(void (*mouse_callback)(int, int, float, float));
 
 void canvash_get_window_size(float* width, float* height);
 
+void canvash_get_mouse_position(float * x, float* y);
+
+bool canvash_is_button_pressed(int button);
+
 // -------------------------------------------------------------
 
 void canvash_rectangle_2D(vec2 p1, vec2 p2);
