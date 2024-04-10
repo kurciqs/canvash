@@ -41,13 +41,14 @@ static unsigned int s_num_objects = 0;
 //--------------------------------------------------------------
 
 // NOTE rectangle drawing variables
-// NOTE rectangles are all instanced, meaning one square is rendered every time and each of them has it's own transform
+// NOTE rectangles are all instanced, meaning one square is rendered every time and each of them has it's own transform and color
 // NOTE scale to match given width and height
 // NOTE translate to match corner coordinates
+// NOTE color is passed through instance data as well
 static int s_num_draw_rectangles = 0;
 static float *s_rectangle_instance_data; // mat4x4 transform, vec4 col
-static const size_t s_rectangle_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
 static const size_t s_rectangle_instance_data_num_floats = 4 * 4 + 4;
+static const size_t s_rectangle_instance_data_size = s_rectangle_instance_data_num_floats * sizeof(float);
 static float s_rectangle_object_data_vertices[8] = {
         -0.5f, -0.5f,
         0.5f, -0.5f,
@@ -63,11 +64,17 @@ static GLuint s_rectangle_instance_data_vbo;
 
 // -------------------------------------------------------------
 
-// NOTE ellipse is also a circle
+// NOTE ellipse drawing variables
+// NOTE ellipse is also a circle, so that is included here as well
+// NOTE ellipses are all instanced, meaning a square is rendered every time and each of them has it's own transform and color
+// NOTE the square is then made into an ellipse in the fragment shader
+// NOTE scale to match given radii
+// NOTE translate to match center coordinates
+// NOTE color is passed through instance data as well
 static int s_num_draw_ellipses = 0;
-static float *s_ellipse_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col */
-static const size_t s_ellipse_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float);
+static float *s_ellipse_instance_data; // mat4x4 transform, vec4 col
 static const size_t s_ellipse_instance_data_num_floats = 4 * 4 + 4;
+static const size_t s_ellipse_instance_data_size = s_ellipse_instance_data_num_floats * sizeof(float);
 static float s_ellipse_object_data_vertices[8] = {
         -0.5f, -0.5f,
         0.5f, -0.5f,
@@ -81,8 +88,20 @@ static GLuint s_ellipse_vao;
 static GLuint s_ellipse_ebo;
 static GLuint s_ellipse_instance_data_vbo;
 
+// NOTE ellipse outline rendering variables
+// NOTE ellipse outlines have to be rendered using the fragment shader
+// NOTE they are significantly more complicated but it's basically the same as ellipses
+// NOTE ellipse outline is also a circle outline, so that is included here as well
+// NOTE ellipse outlines are all instanced, meaning a square is rendered every time and each of them has it's own transform and color
+// NOTE the square is then made into an ellipse outline in the fragment shader
+// NOTE ellipse outlines require additional instance data
+// NOTE scale to match given radii
+// NOTE translate to match center coordinates
+// NOTE color is passed through instance data as well
+// NOTE width is the thickness of the outlines (also called stroke)
+// NOTE size is a vector of the radii of the ellipse, is required for rendering
 static int s_num_draw_ellipse_outlines = 0;
-static float *s_ellipse_outline_instance_data; /* mat4x4 transform (includes position given as argument), vec4 col, float width, vec2 size */
+static float *s_ellipse_outline_instance_data; // mat4x4 transform, vec4 col, float width, vec2 size
 static const size_t s_ellipse_outline_instance_data_size = 4 * 4 * sizeof(float) + 4 * sizeof(float) + 1 * sizeof(float) + 2 * sizeof(float);
 static const size_t s_ellipse_outline_instance_data_num_floats = 4 * 4 + 4 + 1 + 2;
 static Shader s_ellipse_outline_shader;
