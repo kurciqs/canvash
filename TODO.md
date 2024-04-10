@@ -9,3 +9,4 @@
 - [ ] "playtesting"
   - [ ] look for bugs and issues
   - [ ] will need better input control since callbacks are only on key press
+- [ ] anitaliasing very simple
