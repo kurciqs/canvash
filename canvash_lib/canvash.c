@@ -218,7 +218,7 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_SAMPLES, 8);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 //    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwSetErrorCallback(glfw_error_callback);
 
@@ -311,7 +311,7 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
     glm_vec4_zero(s_stroke_color); // black
     s_stroke_color[3] = 1.0f;
     s_fill = true; // fill
-    s_stroke_strength = 5.0f; // none
+    s_stroke_strength = 3.0f;
     s_background[0] = s_background[1] = s_background[2] = 0.5f; // gray
 
     s_init = 1;
@@ -727,7 +727,10 @@ void canvash_get_window_size(float *width, float *height) {
 }
 
 void canvash_get_mouse_position(float *x, float *y) {
-    glfwGetCursorPos(s_window, (double*)x, (double*)y);
+    double x_, y_;
+    glfwGetCursorPos(s_window, &x_, &y_);
+    *x = (float)x_;
+    *y = (float)y_;
 }
 
 bool canvash_is_button_pressed(int button) {
@@ -741,8 +744,8 @@ void canvash_rectangle_2D(vec2 p1, vec2 p2) {
         return;
     }
 
-    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
-        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
+    if (s_num_objects + 2 >= CANVASH_MAX_OBJECTS) {
+        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d current: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS, s_num_objects);
         return;
     }
 
@@ -824,8 +827,8 @@ void canvash_ellipse_2D(float *p, float a, float b) {
         return;
     }
 
-    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
-        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
+    if (s_num_objects + 2 >= CANVASH_MAX_OBJECTS) {
+        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d current: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS, s_num_objects);
         return;
     }
 
@@ -968,8 +971,8 @@ void canvash_circle_2D(float *p, float r) {
         return;
     }
 
-    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
-        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
+    if (s_num_objects + 2 >= CANVASH_MAX_OBJECTS) {
+        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d current: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS, s_num_objects);
         return;
     }
 
@@ -998,8 +1001,8 @@ void canvash_triangle_2D(float *p1, float *p2, float *p3) {
         return;
     }
 
-    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
-        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
+    if (s_num_objects + 2 >= CANVASH_MAX_OBJECTS) {
+        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d current: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS, s_num_objects);
         return;
     }
 
@@ -1102,8 +1105,8 @@ void canvash_line_2D(float *p1, float *p2) {
         return;
     }
 
-    if (s_num_objects * 2 + 2 >= CANVASH_MAX_OBJECTS) {
-        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS);
+    if (s_num_objects + 2 >= CANVASH_MAX_OBJECTS) {
+        fprintf(stderr, "[ERROR] exceeded limit of objects to draw (max: %d current: %d). will not draw anymore.\n", CANVASH_MAX_OBJECTS, s_num_objects);
         return;
     }
 

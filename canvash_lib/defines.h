@@ -77,5 +77,5 @@
 #define CANVASH_BUTTON_IS_PRESSED(x, y, z) x == z && y == GLFW_PRESS
 #define CANVASH_BUTTON_IS_RELEASED(x, y, z) x == z && y == GLFW_RELEASE
 
-#define CANVASH_MAX_OBJECTS 100
+#define CANVASH_MAX_OBJECTS 1000
 #endif //CANVASH_DEFINES_H

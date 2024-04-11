@@ -9,4 +9,4 @@
 - [ ] "playtesting"
   - [ ] look for bugs and issues
   - [ ] will need better input control since callbacks are only on key press
-- [x] anitaliasing very simple
+- [ ] anitaliasing very simple ?  why doesn't glEnablge(GL_MULTISAMPLE) work???
