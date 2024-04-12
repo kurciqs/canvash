@@ -1,19 +1,9 @@
 # canvash
 discount processing / p5.js in C
 
-
 ## about
-so you might know processing (https://processing.org/) or p5.js (https://p5js.org/).
 
-i really enjoy coding with those tools. 
-
-BUT
-
-i hate javascript and java.
-
-so that is why i'll try to implement something similar but i C, since i want to program in a based language.
-
-if you relate and also want to try out what processing in C feels like, feel free to use this library.
+can render simple shapes, like p5.js
 
 ## usage
 
@@ -44,9 +34,4 @@ if you set CMAKE_BUILD_TYPE=Release you will get much better performance since t
 
 ## docs
 
-hehe they will be here one day (maybe)
-
-
-
-HAVE FUN!
-(or just use a different library i'm sure there's lots of better ones out there)
+they will be here one day (maybe)

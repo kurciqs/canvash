@@ -77,5 +77,6 @@
 #define CANVASH_BUTTON_IS_PRESSED(x, y, z) x == z && y == GLFW_PRESS
 #define CANVASH_BUTTON_IS_RELEASED(x, y, z) x == z && y == GLFW_RELEASE
 
+#define CANVASH_RANDOM_COLOR (vec4){(float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f, (float)(rand() % 255) / 255.0f, 1.0f}
 #define CANVASH_MAX_OBJECTS 1000
 #endif //CANVASH_DEFINES_H
