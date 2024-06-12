@@ -8,6 +8,7 @@ typedef struct {
     float energy;
     vec4 color;
     float last_breed;
+    bool dead;
 } Mover;
 
 void apply_force_mover(Mover* mover, vec2 force) {
@@ -83,6 +84,7 @@ void new_mover(Mover* movers, const int i, const float mass, const vec2 pos, con
     mover->color[3] = color[3];
     mover->energy = 1.0f;
     mover->last_breed = 0.0f;
+    mover->dead = false;
 }
 
 // NOTE this is a simple mouse callback function, modify it to your liking
@@ -100,7 +102,7 @@ int main() {
     }
     canvash_set_mouse_callback(mouse_callback);
 
-    int num_movers = 10;
+    int num_movers = 5;
     Mover* movers = (Mover*) malloc(sizeof(Mover) * num_movers);
     vec2 screen_size;
     canvash_get_window_size(&screen_size[0], &screen_size[1]);
@@ -122,7 +124,9 @@ int main() {
         canvash_clear_screen();
         canvash_background((vec3){0.1f, 0.1f, 0.1f});
 
-        if (!canvash_is_button_pressed(CANVASH_MOUSE_BUTTON_RIGHT)) {
+        float width, height;
+        canvash_get_window_size(&width, &height);
+        if (width > 0.0f && height > 0.0f && !canvash_is_button_pressed(CANVASH_MOUSE_BUTTON_RIGHT)) {
             for (int i = 0; i < num_movers; i++) {
                 Mover *mover_i = &movers[i];
                 for (int j = i; j < num_movers; j++) {
@@ -143,18 +147,38 @@ int main() {
                     }
                 }
                 // NOTE reproduction
-                if (mover_i->energy > 0.5f && rand() % 2 == 0 && mover_i->last_breed > 10.0f) {
+                if (mover_i->energy > 0.5f && rand() % 2 == 0 && mover_i->last_breed > 20.0f) {
                     num_movers++;
                     movers = (Mover*) realloc(movers, num_movers * sizeof(Mover));
-                    new_mover(movers, num_movers - 1, glm_clamp(mover_i->mass + (float)(rand() % 15 - 15), 1.0f, 100.0f), mover_i->pos, (vec2){0.0f, 0.0f}, (vec4){0.0f, 1.0f, 0.0f, 1.0f});
+                    new_mover(movers, num_movers - 1, glm_clamp(mover_i->mass + (float)(rand() % 15 - 15), 20.0f, 100.0f), mover_i->pos, (vec2){0.0f, 0.0f}, (vec4){0.0f, 1.0f, 0.0f, 1.0f});
                     mover_i->last_breed = 0.0f;
                 }
+                // NOTE death
+                if (mover_i->energy <= 0) {
+                    mover_i->dead = true;
+                }
             }
+
+            // NOTE delete from array
+            int ind = 0;
+            Mover* new_movers = (Mover*) malloc(sizeof(Mover) * num_movers);
+            for (int i = 0; i < num_movers; i++) {
+                Mover *mover_i = &movers[i];
+                update_mover(mover_i);
+                if (!mover_i->dead)
+                    new_movers[ind++] = *mover_i;
+            }
+            // NOTE reset the movers array
+            free((void*)movers);
+            num_movers = ind;
+            movers = (Mover*) malloc(sizeof(Mover) * num_movers);
+            memcpy(movers, new_movers, sizeof(Mover) * num_movers);
+//            printf("%d\n", num_movers);
+            free((void*)new_movers);
         }
 
         for (int i = 0; i < num_movers; i++) {
             Mover *mover_i = &movers[i];
-            update_mover(mover_i);
             draw_mover(mover_i);
         }
 
@@ -164,6 +188,6 @@ int main() {
 
     // NOTE do not forget to terminate, otherwise there will be memory leaks
     canvash_terminate();
-    free(movers);
+    free((void*)movers);
     return 0;
 }
