@@ -158,7 +158,11 @@ int main() {
                     mover_i->dead = true;
                 }
             }
-
+            for (int i = 0; i < num_movers; i++)
+            {
+                Mover *mover_i = &movers[i];
+                update_mover(mover_i);
+            }
             // NOTE delete from array
             int ind = 0;
             Mover* new_movers = (Mover*) malloc(sizeof(Mover) * num_movers);

@@ -21,7 +21,3 @@ target_link_libraries(${PROJECT_NAME} canvash_lib)
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") # GCC / MinGW
     target_link_libraries(${PROJECT_NAME} -static-libgcc -static-libstdc++)
 endif()
-
-IF (WIN32)
-    target_link_libraries(${PROJECT_NAME} -static winpthread)
-ENDIF()

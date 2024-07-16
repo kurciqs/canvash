@@ -261,11 +261,13 @@ int canvash_init(const char *app_name, int app_width, int app_height, const char
             return 0;
         }
 
+#ifndef __APPLE__
         GLFWimage icon;
         icon.width = width;
         icon.height = height;
         icon.pixels = image;
         glfwSetWindowIcon(s_window, 1, &icon);
+#endif
     }
 
     glfwSetKeyCallback(s_window, glfw_key_callback);
