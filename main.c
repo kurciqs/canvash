@@ -126,60 +126,65 @@ int main() {
 
         float width, height;
         canvash_get_window_size(&width, &height);
-        if (width > 0.0f && height > 0.0f && !canvash_is_button_pressed(CANVASH_MOUSE_BUTTON_RIGHT)) {
-            for (int i = 0; i < num_movers; i++) {
-                Mover *mover_i = &movers[i];
-                for (int j = i; j < num_movers; j++) {
-                    if (i == j) continue;
-                    Mover *mover_j = &movers[j];
-                    float r = glm_vec2_distance(mover_i->pos, mover_j->pos);
-                    if (r < mover_i->mass + mover_j->mass && mover_i->last_breed > 5.0f) {
-                        if (mover_i->energy == 0.0f || mover_j->energy == 0.0f) continue;
-                        // NOTE rule: bigger one wins, no matter what, equal is draw
-                        if (mover_i->mass > mover_j->mass) {
-                            mover_i->energy += mover_j->energy;
-                            mover_j->energy = 0.0f;
-                        }
-                        else if (mover_i->mass < mover_j->mass) {
-                            mover_j->energy += mover_j->energy;
-                            mover_i->energy = 0.0f;
-                        }
+        Mover* newborn_movers = (Mover*) malloc(sizeof(Mover) * 0);
+        int num_newborn_movers = 0;
+
+        for (int i = 0; i < num_movers; i++) {
+            Mover *mover_i = &movers[i];
+            for (int j = i; j < num_movers; j++) {
+                if (i == j) continue;
+                Mover *mover_j = &movers[j];
+                float r = glm_vec2_distance(mover_i->pos, mover_j->pos);
+                if (r < mover_i->mass + mover_j->mass && mover_i->last_breed > 5.0f) {
+                    if (mover_i->energy == 0.0f || mover_j->energy == 0.0f) continue;
+                    // NOTE rule: bigger one wins, no matter what, equal is draw
+                    if (mover_i->mass > mover_j->mass) {
+                        mover_i->energy += mover_j->energy;
+                        mover_j->energy = 0.0f;
+                    }
+                    else if (mover_i->mass < mover_j->mass) {
+                        mover_j->energy += mover_j->energy;
+                        mover_i->energy = 0.0f;
                     }
                 }
-                // NOTE reproduction
-                if (mover_i->energy > 0.5f && rand() % 2 == 0 && mover_i->last_breed > 20.0f) {
-                    num_movers++;
-                    movers = (Mover*) realloc(movers, num_movers * sizeof(Mover));
-                    new_mover(movers, num_movers - 1, glm_clamp(mover_i->mass + (float)(rand() % 15 - 15), 20.0f, 100.0f), mover_i->pos, (vec2){0.0f, 0.0f}, (vec4){0.0f, 1.0f, 0.0f, 1.0f});
-                    mover_i->last_breed = 0.0f;
-                }
-                // NOTE death
-                if (mover_i->energy <= 0) {
-                    mover_i->dead = true;
-                }
             }
-            for (int i = 0; i < num_movers; i++)
-            {
-                Mover *mover_i = &movers[i];
-                update_mover(mover_i);
+            // NOTE reproduction
+            if (mover_i->energy > 0.5f && rand() % 2 == 0 && mover_i->last_breed > 20.0f) {
+                //num_newborn_movers++;
+                //newborn_movers = (Mover*) realloc(movers, num_newborn_movers * sizeof(Mover));
+                //new_mover(newborn_movers, num_newborn_movers - 1, glm_clamp(mover_i->mass + (float)(rand() % 15 - 15), 20.0f, 100.0f), mover_i->pos, (vec2){0.0f, 0.0f}, (vec4){0.0f, 1.0f, 0.0f, 1.0f});
+                mover_i->last_breed = 0.0f;
             }
-            // NOTE delete from array
-            int ind = 0;
-            Mover* new_movers = (Mover*) malloc(sizeof(Mover) * num_movers);
-            for (int i = 0; i < num_movers; i++) {
-                Mover *mover_i = &movers[i];
-                update_mover(mover_i);
-                if (!mover_i->dead)
-                    new_movers[ind++] = *mover_i;
+            // NOTE death
+            if (mover_i->energy <= 0) {
+                mover_i->dead = true;
             }
-            // NOTE reset the movers array
-            free((void*)movers);
-            num_movers = ind;
-            movers = (Mover*) malloc(sizeof(Mover) * num_movers);
-            memcpy(movers, new_movers, sizeof(Mover) * num_movers);
-//            printf("%d\n", num_movers);
-            free((void*)new_movers);
         }
+
+        // NOTE delete from array
+        for (int i = 0; i < num_movers; i++) {
+            Mover *mover_i = &movers[i];
+            update_mover(mover_i);
+        }
+
+        Mover* new_movers = (Mover*) malloc(sizeof(Mover) * (num_movers));
+        int ind = 0;
+        for (int i = 0; i < num_movers; i++) {
+            Mover *mover_i = &movers[i];
+            if (!mover_i->dead)
+            {
+                new_movers[ind++] = *mover_i;
+            }
+        }
+        // NOTE reset the movers array
+        free((void*)movers);
+        num_movers = ind;
+        movers = (Mover*) malloc(sizeof(Mover) * num_movers);
+        memcpy(movers, new_movers, sizeof(Mover) * num_movers);
+        printf("%d\n", num_movers);
+        free((void*)new_movers);
+
+
 
         for (int i = 0; i < num_movers; i++) {
             Mover *mover_i = &movers[i];
