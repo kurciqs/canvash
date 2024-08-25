@@ -59,12 +59,21 @@ int main()
             float cursor_x, cursor_y;
             canvash_get_mouse_position(&cursor_x, &cursor_y);
 
-            int i, j;
-            i = (int)((float)(cursor_x)/(cell_size[0]));
-            j = (int)((float)(height-cursor_y)/(cell_size[1]));
+            float l_width, l_height;
+            canvash_get_window_size(&l_width, &l_height);
 
-            const int index = i*grid_size[1]+j;
-            grid[index] = 1;
+            float pos_x = cursor_x-(l_width-width)/2.0f;
+            float pos_y = (height-cursor_y)+(l_height-height)/2.0f;
+
+            if (!(pos_x < 0.0f || pos_x > width) && !(pos_y < 0.0f || pos_y > height))
+            {
+                int i, j;
+                i = (int)((float)(pos_x)/(cell_size[0]));
+                j = (int)((float)(pos_y)/(cell_size[1]));
+
+                const int index = i*grid_size[1]+j;
+                grid[index] = 1;
+            }
         }
 
         // NOTE essential (do not leave out)
