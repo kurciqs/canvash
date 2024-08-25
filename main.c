@@ -1,202 +1,78 @@
 #include "canvash_lib/canvash.h"
+#define t canvash_time()
+#define RAND_COLOR (vec4){(float)(rand()%255)/255.0f,(float)(rand()%255)/255.0f,(float)(rand()%255)/255.0f, 1.0f}
+#define RGB_COLOR(x,y,z) (vec4){(float)(x)/255.0f,(float)(y)/255.0f,(float)(z)/255.0f, 1.0f}
 
-typedef struct {
-    vec2 pos;
-    vec2 vel;
-    vec2 acc;
-    float mass;
-    float energy;
-    vec4 color;
-    float last_breed;
-    bool dead;
-} Mover;
 
-void apply_force_mover(Mover* mover, vec2 force) {
-    vec2 f;
-    glm_vec2_copy(force, f);
-    glm_vec2_scale(f, 1.0f/mover->mass, f);
-    glm_vec2_add(mover->acc, f, mover->acc);
-}
-
-void update_mover(Mover* mover) {
-    mover->energy = glm_clamp(mover->energy, 0.0f, 1.0f);
-    mover->energy = glm_clamp(mover->energy - 0.001f, 0.0f, 1.0f);
-    mover->last_breed += 0.1;
-    float theta = glm_rad((float)(rand() % 360));
-    float mag = (float)(rand() % 10) / 1.0f;
-
-    vec2 force = {mag * cosf(theta), mag * sinf(theta)};
-
-    apply_force_mover(mover, force);
-    glm_vec2_add(mover->vel, mover->acc, mover->vel);
-
-    if (mover->energy > 0.0f) {
-        glm_vec2_scale(mover->vel, mover->energy, mover->vel);
-        glm_vec2_add(mover->pos, mover->vel, mover->pos);
-        glm_vec2_scale(mover->vel, 1.0f / mover->energy, mover->vel);
-    }
-
-    glm_vec2_zero(mover->acc);
-
-    glm_vec4_lerp((vec4){0.0f, 1.0f, 0.0f, 1.0f}, (vec4){1.0f, 0.0f, 0.0f, 1.0f}, 1.0f - mover->energy, mover->color);
-
-    vec2 screen_size;
-    canvash_get_window_size(&screen_size[0], &screen_size[1]);
-
-    if (mover->pos[0] >= screen_size[0] / 2.0f - mover->mass) {
-        mover->pos[0] = screen_size[0] / 2.0f - mover->mass;
-        mover->vel[0] *= -1.0f;
-    }
-    else if (mover->pos[0] <= -screen_size[0] / 2.0f + mover->mass) {
-        mover->pos[0] = -screen_size[0] / 2.0f + mover->mass;
-        mover->vel[0] *= -1.0f;
-    }
-
-    if (mover->pos[1] >= screen_size[1] / 2.0f - mover->mass) {
-        mover->pos[1] = screen_size[1] / 2.0f - mover->mass;
-        mover->vel[1] *= -1.0f;
-    }
-    else if (mover->pos[1] <= -screen_size[1] / 2.0f + mover->mass) {
-        mover->pos[1] = -screen_size[1] / 2.0f + mover->mass;
-        mover->vel[1] *= -1.0f;
-    }
-}
-
-void draw_mover(Mover* mover) {
-    canvash_no_stroke();
-    canvash_stroke_color((vec4){0.1f, 0.1f, 0.1f, 1.0f});
-//    canvash_stroke(3.0f);
-    canvash_fill_color(mover->color);
-    canvash_circle_2D(mover->pos, mover->mass);
-}
-
-void new_mover(Mover* movers, const int i, const float mass, const vec2 pos, const vec2 vel, const vec4 color) {
-    Mover* mover = &movers[i];
-    mover->mass = mass;
-    mover->pos[0] = pos[0];
-    mover->pos[1] = pos[1];
-    mover->vel[0] = vel[0];
-    mover->vel[1] = vel[1];
-    glm_vec2_zero(mover->acc);
-    mover->color[0] = color[0];
-    mover->color[1] = color[1];
-    mover->color[2] = color[2];
-    mover->color[3] = color[3];
-    mover->energy = 1.0f;
-    mover->last_breed = 0.0f;
-    mover->dead = false;
-}
-
-// NOTE this is a simple mouse callback function, modify it to your liking
-void mouse_callback(int button, int action, float xpos, float ypos) {
-    if (CANVASH_BUTTON_IS_PRESSED(button, action, CANVASH_MOUSE_BUTTON_LEFT)) {
-        printf("Hewwo, mouse callback work at %f %f!\n", xpos, ypos);
-    }
-}
-
-int main() {
+int main()
+{
     // NOTE initialize canvash with size 800x600, title "canvash_dev", with an icon, 2D mode (check if it failed) and set the key and mouse callback
-    if (!canvash_init("canvash_dev", 800, 600, "res/img/icon.png", twodimensional)) {
+    if (!canvash_init("canvash_dev", 800, 600, "res/img/icon.png", twodimensional))
+    {
         printf("[USER] failed initialization.\n");
         return -1;
     }
-    canvash_set_mouse_callback(mouse_callback);
 
-    int num_movers = 5;
-    Mover* movers = (Mover*) malloc(sizeof(Mover) * num_movers);
-    vec2 screen_size;
-    canvash_get_window_size(&screen_size[0], &screen_size[1]);
+    vec4 colors_by_index[3];
 
-    for (int i = 0; i < num_movers; i++) {
-        float mass = rand() % 15 + 15;
-        vec2 pos;
-        pos[0] = rand() % (int)(screen_size[0]/2.0f - (int)mass) - rand() % ((int)(screen_size[0]/2.0f) - (int)mass);
-        pos[1] = rand() % (int)(screen_size[1]/2.0f - (int)mass) - rand() % (int)(screen_size[1]/2.0f - (int)mass);
-        vec2 vel;
-        vel[0] = 0.0f;
-        vel[1] = 0.0f;
-        new_mover(movers, i, mass, pos, vel, (vec4){0.0f, 1.0f, 0.0f, 1.0f});
+    glm_vec4_copy(RGB_COLOR(0, 0, 0), colors_by_index[0]);
+    glm_vec4_copy(RGB_COLOR(255, 0, 0), colors_by_index[1]);
+    glm_vec4_copy(RGB_COLOR(0, 255, 0), colors_by_index[2]);
+
+    int dimensions = 40;
+    float width, height;
+    canvash_get_window_size(&width, &height);
+
+    ivec2 grid_size = {dimensions, dimensions*height/width};
+    vec2 cell_size = {width/grid_size[0], height/grid_size[1]};
+    int* grid = (int*)malloc(sizeof(int) * grid_size[0] * grid_size[1]);
+
+    for (int i = 0; i < grid_size[0]; ++i)
+    {
+        for (int j = 0; j < grid_size[1]; ++j)
+        {
+            grid[i*grid_size[1]+j] = 0;
+        }
     }
 
     // NOTE this is your main loop, it's like the draw() function in p5.js
-    while (canvash_running()) {
+    while (canvash_running())
+    {
         // NOTE essential (do not leave out)
         canvash_clear_screen();
-        canvash_background((vec3){0.1f, 0.1f, 0.1f});
+        canvash_background((vec3){0.2f, 0.3f, canvash_time()/200.0f});
 
-        float width, height;
-        canvash_get_window_size(&width, &height);
-        Mover* newborn_movers = (Mover*) malloc(sizeof(Mover) * 0);
-        int num_newborn_movers = 0;
-
-        for (int i = 0; i < num_movers; i++) {
-            Mover *mover_i = &movers[i];
-            for (int j = i; j < num_movers; j++) {
-                if (i == j) continue;
-                Mover *mover_j = &movers[j];
-                float r = glm_vec2_distance(mover_i->pos, mover_j->pos);
-                if (r < mover_i->mass + mover_j->mass && mover_i->last_breed > 5.0f) {
-                    if (mover_i->energy == 0.0f || mover_j->energy == 0.0f) continue;
-                    // NOTE rule: bigger one wins, no matter what, equal is draw
-                    if (mover_i->mass > mover_j->mass) {
-                        mover_i->energy += mover_j->energy;
-                        mover_j->energy = 0.0f;
-                    }
-                    else if (mover_i->mass < mover_j->mass) {
-                        mover_j->energy += mover_j->energy;
-                        mover_i->energy = 0.0f;
-                    }
-                }
-            }
-            // NOTE reproduction
-            if (mover_i->energy > 0.5f && rand() % 2 == 0 && mover_i->last_breed > 20.0f) {
-                //num_newborn_movers++;
-                //newborn_movers = (Mover*) realloc(movers, num_newborn_movers * sizeof(Mover));
-                //new_mover(newborn_movers, num_newborn_movers - 1, glm_clamp(mover_i->mass + (float)(rand() % 15 - 15), 20.0f, 100.0f), mover_i->pos, (vec2){0.0f, 0.0f}, (vec4){0.0f, 1.0f, 0.0f, 1.0f});
-                mover_i->last_breed = 0.0f;
-            }
-            // NOTE death
-            if (mover_i->energy <= 0) {
-                mover_i->dead = true;
-            }
-        }
-
-        // NOTE delete from array
-        for (int i = 0; i < num_movers; i++) {
-            Mover *mover_i = &movers[i];
-            update_mover(mover_i);
-        }
-
-        Mover* new_movers = (Mover*) malloc(sizeof(Mover) * (num_movers));
-        int ind = 0;
-        for (int i = 0; i < num_movers; i++) {
-            Mover *mover_i = &movers[i];
-            if (!mover_i->dead)
+        for (int i = 0; i < grid_size[0]; ++i)
+        {
+            for (int j = 0; j < grid_size[1]; ++j)
             {
-                new_movers[ind++] = *mover_i;
+                const int id = grid[i*grid_size[1]+j];
+
+                canvash_fill_color(colors_by_index[id]);
+                canvash_no_stroke();
+                canvash_rectangle_2D((vec2){i*cell_size[0] - width/2.0f, j*cell_size[1] - height/2.0f}, (vec2){(i+1)*cell_size[0]- width/2.0f, (j+1)*cell_size[1] - height/2.0f});
             }
         }
-        // NOTE reset the movers array
-        free((void*)movers);
-        num_movers = ind;
-        movers = (Mover*) malloc(sizeof(Mover) * num_movers);
-        memcpy(movers, new_movers, sizeof(Mover) * num_movers);
-        printf("%d\n", num_movers);
-        free((void*)new_movers);
 
+        if (canvash_is_mouse_down(CANVASH_MOUSE_BUTTON_LEFT))
+        {
+            float cursor_x, cursor_y;
+            canvash_get_mouse_position(&cursor_x, &cursor_y);
 
+            int i, j;
+            i = (int)((float)(cursor_x)/(cell_size[0]));
+            j = (int)((float)(height-cursor_y)/(cell_size[1]));
 
-        for (int i = 0; i < num_movers; i++) {
-            Mover *mover_i = &movers[i];
-            draw_mover(mover_i);
+            const int index = i*grid_size[1]+j;
+            grid[index] = 1;
         }
 
         // NOTE essential (do not leave out)
         canvash_render();
     }
 
-    // NOTE do not forget to terminate, otherwise there will be memory leaks
+    free((void*)grid);
+    // NOTE do not forget to terminate, otherwise there will be serious memory leaks
     canvash_terminate();
-    free((void*)movers);
     return 0;
 }

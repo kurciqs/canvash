@@ -77,3 +77,9 @@ void canvash_no_stroke();
 void canvash_background(vec3 background);
 
 float canvash_time();
+
+// -------------------------------------------------------------
+
+bool canvash_is_key_down(int keycode);
+
+bool canvash_is_mouse_down(int mousecode);

@@ -342,6 +342,15 @@ void canvash_render() {
         fprintf(stderr, "[ERROR] can't call canvash_render() without initialization first. call canvash_init() before doing anything else.\n");
         return;
     }
+
+    // NOTE do this for safety, stupid callback never works on mac
+    {
+        int width, height;
+        glfwGetWindowSize(s_window, &width, &height);
+        s_window_size[0] = (float) width;
+        s_window_size[1] = (float) height;
+    }
+
     glm_ortho(-s_window_size[0] / 2.0f, s_window_size[0] / 2.0f, -s_window_size[1] / 2.0f, s_window_size[1] / 2.0f, -1.0f, 1.0f, s_proj);
 //    glm_ortho(-s_window_size[0] / s_window_size[1], s_window_size[0] / s_window_size[1], -1.0f, 1.0f, -1.0f, 1.0f, s_proj);
 
@@ -726,6 +735,12 @@ void canvash_get_window_size(float *width, float *height) {
 
     *width = s_window_size[0];
     *height = s_window_size[1];
+
+    int i_w, i_h;
+    glfwGetWindowSize(s_window, &i_w, &i_h);
+
+    *width = (float)i_w;
+    *height = (float)i_h;
 }
 
 void canvash_get_mouse_position(float *x, float *y) {
@@ -1315,4 +1330,14 @@ float canvash_time() {
     }
 
     return (float) glfwGetTime() * 10.0f;
+}
+
+bool canvash_is_key_down(int keycode)
+{
+    return glfwGetKey(s_window, keycode) == GLFW_PRESS;
+}
+
+bool canvash_is_mouse_down(int mousecode)
+{
+    return glfwGetMouseButton(s_window, mousecode) == GLFW_PRESS;
 }
